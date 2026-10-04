@@ -1,0 +1,7 @@
+allowBuilds:
+  '@swc/core': true
+  esbuild: true
+
+# MES_FE의 pnpm-lock.yaml과 같은 SWC 버전으로 개발 환경을 맞춥니다.
+overrides:
+  '@swc/core': 1.16.2
