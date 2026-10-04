@@ -18,7 +18,10 @@
 		"noFallthroughCasesInSwitch": true,
 		"noUncheckedSideEffectImports": true,
 		"jsx": "react-jsx",
-		"resolveJsonModule": true
+		"resolveJsonModule": true,
+		"paths": {
+			"@/*": ["./*"]
+		}
 	},
 	"include": ["src"]
 }

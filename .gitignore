@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# 환경별 개인 설정 (공개 개발 기본값과 예시는 커밋)
+.env
+.env.*
+!.env.development
+!.env.example
