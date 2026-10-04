@@ -1,0 +1,11 @@
+# 의존성·빌드·검증 결과물
+node_modules/
+dist/
+dist-ssr/
+coverage/
+storybook-static/
+
+# 도구가 생성하고 관리하는 파일
+pnpm-lock.yaml
+src/routeTree.gen.ts
+public/mockServiceWorker.js

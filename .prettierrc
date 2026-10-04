@@ -1,0 +1,20 @@
+{
+	"singleQuote": true,
+	"trailingComma": "all",
+	"semi": true,
+	"useTabs": true,
+	"jsxSingleQuote": true,
+	"tabWidth": 4,
+	"printWidth": 100,
+	"endOfLine": "lf",
+	"bracketSpacing": true,
+	"arrowParens": "avoid",
+	"overrides": [
+		{
+			"files": ["**/*.{css,pcss,scss}"],
+			"options": {
+				"parser": "css"
+			}
+		}
+	]
+}
