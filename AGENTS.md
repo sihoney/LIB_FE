@@ -4,7 +4,7 @@
 
 - 도서관 통합 관리 시스템을 구현하며 MES_FE와 MES_BE의 설계 이유를 학습한다.
 - LIB_FE를 MSW·Faker 기반으로 먼저 구현하고, LIB_BE는 별도 저장소에서 후속 구현한다.
-- 현재는 React·TypeScript·Vite·SWC, 코드 검사·포맷, 경로 별칭·환경변수 기반만 구현되어 있다.
+- 현재는 React·TypeScript·Vite·SWC, 코드 검사·포맷, 경로 별칭·환경변수와 MSW 앱 초기화 기반이 구현되어 있다.
 - 상세 설계와 도입 상태는 [아키텍처 문서](docs/architecture.md)를 기준으로 한다. 도구·계층을 실제 도입할 때 상태를 갱신한다.
 
 ## 작업 방식

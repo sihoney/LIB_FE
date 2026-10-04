@@ -6,13 +6,13 @@ LIB_FE는 MES_FE의 구조를 참고하는 독립적인 도서관 프론트엔�
 
 2026-10-04 기준:
 
-| 상태             | 구성                                                                                |
-| ---------------- | ----------------------------------------------------------------------------------- |
-| 구현됨           | React 19, TypeScript 5.9, Vite 7, SWC, Oxlint, Prettier, LF 설정                    |
-| 구현됨           | 프로젝트 루트 `@` 별칭, 개발 환경값, `envKeys.ts`, 환경변수 타입                    |
-| 기본 템플릿 유지 | `App.tsx`, `main.tsx`, CSS와 예제 이미지                                            |
-| 도입 예정        | TanStack Router·Query, Axios, MSW·Faker, Zustand, react-hook-form·Zod, MUI·Tailwind |
-| 도입 예정        | 공통 레이아웃, 인증, 도서·회원·대출 기능, Repository·Service                        |
+| 상태      | 구성                                                                            |
+| --------- | ------------------------------------------------------------------------------- |
+| 구현됨    | React 19, TypeScript 5.9, Vite 7, SWC, Oxlint, Prettier, LF 설정                |
+| 구현됨    | 프로젝트 루트 `@` 별칭, 개발 환경값, `envKeys.ts`, 환경변수 타입                |
+| 구현됨    | 앱 시작 흐름, MSW 준비 대기, LIB 시작 화면                                      |
+| 도입 예정 | TanStack Router·Query, Axios, Faker, Zustand, react-hook-form·Zod, MUI·Tailwind |
+| 도입 예정 | 공통 레이아웃, 인증, 도서·회원·대출 기능, Repository·Service                    |
 
 이 문서의 예시 경로는 목표 배치이며, 파일이 이미 존재한다는 뜻은 아니다. 사용하지 않는 빈 폴더와 기반 클래스는 생성하지 않는다. 규칙은 현재 문서·리뷰 기준이며 전체 의존 방향을 검사하는 자동 린트 규칙은 아직 없다.
 
@@ -132,7 +132,7 @@ MSW HTTP 핸들러 → Mock 업무 로직·Repository → Mock 저장소
 - Faker는 초기화에 사용한다. 동일 seed와 제어 가능한 기준 날짜, 재고 0·연체 등 고정 사례를 둔다.
 - Mock 데이터 유지·초기화는 Mock 저장소의 책임이며, 화면용 Zustand 서버 목록으로 구현하지 않는다.
 - Mock 업무 규칙은 개발용 시뮬레이션이다. 실제 인증·권한·트랜잭션·동시성은 LIB_BE 구현 후 별도 검증한다.
-- 현재 `ENV_ENABLE_MSW`는 설정값만 존재한다. MSW Worker는 아직 연결되지 않았다.
+- `ENV_ENABLE_MSW`가 true이면 `MswProvider`가 Worker를 시작하고 완료 후 하위 화면을 렌더링한다. false이면 Worker 모듈을 가져오지 않는다. 현재 업무 핸들러는 비어 있으며, 미처리 요청은 실제 네트워크로 통과한다.
 
 ## 7. 도서 조회 기능의 파일 연결 예시
 
@@ -173,3 +173,18 @@ Query 영속 캐시·버전 폴링, KeepAlive, 그리드 개인화, MQTT, PDF·�
 - [MES 도서 관리 참고용 품목 Mock 예제](../../MES_FE/src/mocks/repositories/modules/mdm/mdmItemMockRepository.ts)
 
 현재 구현된 LIB 설정은 [환경값 모듈](../src/consts/common/envKeys.ts)과 [README](../README.md)를 참고한다. 작업 진행·검증·커밋 원칙은 [AGENTS.md](../AGENTS.md)를 따른다.
+
+## 10. 앱 초기화
+
+`main.tsx`는 `StrictMode → MswProvider → App` 순서로 구성한다.
+
+- `MswProvider`는 모듈 범위의 Promise를 `use()`로 읽는다. 대기 중에는 `Suspense`가 `AppLoading`을 표시한다.
+- MSW 활성화 조건은 MES와 동일하게 `ENV_ENABLE_MSW`다. 개발 모드에서는 `.env.development` 기본값이 true이며, production 기본값은 false다. 공개 배포에서는 활성화하지 않는다.
+- Worker URL은 `ENV_BASE_URL`을 사용하여 하위 경로 배포에서도 올바르게 해석한다.
+- MES와 동일하게 MSW 시작 실패를 처리하는 별도 최상위 오류 화면은 두지 않는다. Router 도입 시 MES의 `ErrorComponent`와 라우트 오류 처리 방식을 적용한다.
+- Router의 오류 처리는 바깥에 있는 MswProvider의 시작 실패까지 처리하지 않는다.
+- HMR 시 이전 Worker는 시작 완료 후 정리한다.
+- `public/mockServiceWorker.js`는 생성 파일이다. MSW 버전 변경 시 `pnpm exec msw init public --save`로 갱신한다.
+- 업무 API와 Faker, Query·Router·테마 Provider는 후속 단계에서 추가한다. 예제 이미지 파일은 현재 사용하지 않는다.
+
+참고: [React use](https://react.dev/reference/react/use), [MSW worker.start](https://mswjs.io/api/setup-worker/start).

@@ -49,4 +49,4 @@ See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rule
 
 `pnpm build`는 기본 production 모드이므로 `.env.development`를 읽지 않습니다. 배포 환경에서는 API 주소를 주입하고, 기본 `/api`를 사용하려면 배포 서버에서 해당 경로를 연결해야 합니다. `VITE_` 값은 빌드에 포함되는 공개 설정으로 비밀값을 넣으면 안 됩니다.
 
-현재는 MSW 활성화 값을 정의하는 단계이며, Worker·핸들러가 아직 없어 실제 Mock 응답은 제공하지 않습니다.
+MSW가 활성화되어 있으면 Worker 준비가 끝난 뒤 화면을 표시합니다. 준비 중 안내를 표시하며, MES와 동일하게 MSW 시작 실패를 처리하는 별도 오류 화면은 두지 않습니다. 현재 업무 핸들러 목록은 비어 있으므로 모든 요청은 실제 네트워크로 통과하며, 도서 Mock 응답과 Faker 데이터는 후속 단계에서 추가합니다. 앱 시작 흐름은 [아키텍처 문서](docs/architecture.md#10-앱-초기화)를 참고하세요.
