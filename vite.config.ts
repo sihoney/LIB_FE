@@ -1,3 +1,4 @@
+import tailwindcss from '@tailwindcss/vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import react from '@vitejs/plugin-react-swc';
 import { fileURLToPath, URL } from 'node:url';
@@ -20,6 +21,8 @@ export default defineConfig(({ mode }) => {
 				autoCodeSplitting: true,
 			}),
 			react(),
+			// tailwindcss: Tailwind를 CSS로 변환하는 과정 연결
+			tailwindcss(),
 		],
 		optimizeDeps: { entries: ['index.html', 'src/pages/**/*.tsx'] },
 		resolve: {

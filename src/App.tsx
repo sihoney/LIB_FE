@@ -1,4 +1,5 @@
 import '@/src/App.css';
+import SwitchTheme from '@/src/components/inputs/switchs/SwitchTheme';
 import { Link } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
@@ -15,6 +16,9 @@ const App = ({ children }: IProps) => (
 				공지글
 			</Link>
 		</nav>
+		<div className='mb-6 flex justify-end'>
+			<SwitchTheme />
+		</div>
 		{children}
 	</main>
 );

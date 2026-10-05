@@ -1,33 +1,72 @@
+@import 'tailwindcss' important;
+
+@font-face {
+	font-family: 'Noto Sans KR';
+	src: url('/fonts/noto-sans-kr.ttf') format('truetype');
+	font-weight: 100 900;
+	font-style: normal;
+	font-display: swap;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-	font-family: system-ui, 'Segoe UI', sans-serif;
-	line-height: 1.6;
-	color: #243047;
-	background: #f5f7fa;
+	--body-bg: #f5f5f5;
+	--card-border: #eef2f7;
+	--scrollbar-thumb: #bdbdbd;
+	--scrollbar-thumb-hover: #9e9e9e;
+	font-family: 'Noto Sans KR', sans-serif;
 	font-synthesis: none;
 	text-rendering: optimizeLegibility;
 	-webkit-font-smoothing: antialiased;
+	background: var(--body-bg);
 }
 
-* {
-	box-sizing: border-box;
+.dark {
+	--body-bg: var(--color-neutral-800);
+	--card-border: rgba(255, 255, 255, 0.12);
+	--scrollbar-thumb: #616161;
+	--scrollbar-thumb-hover: #757575;
+}
+
+/* Tailwind도 MUI가 생성한 색상 변수를 읽습니다. 색상 원본은 baseTheme입니다. */
+@theme inline {
+	--font-noto: 'Noto Sans KR', sans-serif;
+	--color-primary: var(--mui-palette-primary-main);
+	--color-secondary: var(--mui-palette-secondary-main);
+	--color-error: var(--mui-palette-error-main);
+	--color-warning: var(--mui-palette-warning-main);
+	--color-info: var(--mui-palette-info-main);
+	--color-success: var(--mui-palette-success-main);
+	--color-on-primary: var(--mui-palette-primary-contrastText);
+	--color-on-secondary: var(--mui-palette-secondary-contrastText);
+	--color-body: var(--body-bg);
+	--color-surface: var(--mui-palette-background-default);
+	--color-paper: var(--mui-palette-background-paper);
+	--color-on-surface: var(--mui-palette-text-primary);
+	--color-on-surface-secondary: var(--mui-palette-text-secondary);
+	--color-disabled: var(--mui-palette-text-disabled);
+	--color-divider: var(--mui-palette-divider);
 }
 
 body {
 	margin: 0;
 	min-width: 320px;
 }
-
 #root {
 	min-height: 100svh;
 }
-
 h1 {
 	font-size: clamp(1.5rem, 4vw, 2rem);
 	line-height: 1.3;
 }
 
+/* MSW 시작 중에는 ThemeProvider가 아직 없으므로 기본값도 지정합니다. */
 .app-status {
 	max-width: 720px;
 	margin: 0 auto;
 	padding: 80px 24px;
+}
+.app-status h1 {
+	margin-bottom: 16px;
 }

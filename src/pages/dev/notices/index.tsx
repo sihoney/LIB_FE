@@ -1,3 +1,5 @@
+import Button from '@/src/components/ui/buttons/Button';
+import { Card, Typography } from '@mui/material';
 import services from '@/src/services/services';
 import type { TNoticeScenario } from '@/src/types/modules/dev/notice';
 import { createFileRoute, Link } from '@tanstack/react-router';
@@ -13,8 +15,12 @@ const Component = () => {
 
 	return (
 		<section>
-			<h1>테스트용 공지글</h1>
-			<p>응답 유형을 선택해 목록·로딩·오류 처리를 확인할 수 있습니다.</p>
+			<Typography component='h1' variant='h4' className='mb-4 font-bold'>
+				테스트용 공지글
+			</Typography>
+			<p className='mb-6 text-on-surface-secondary'>
+				응답 유형을 선택해 목록·로딩·오류 처리를 확인할 수 있습니다.
+			</p>
 
 			<nav className='actions' aria-label='테스트 응답 선택'>
 				<Link to='/dev/notices' search={{ scenario: 'success' }}>
@@ -28,20 +34,22 @@ const Component = () => {
 				</Link>
 			</nav>
 
-			<button type='button' disabled={query.isFetching} onClick={() => void query.refetch()}>
+			<Button type='button' disabled={query.isFetching} onClick={() => void query.refetch()}>
 				재조회
-			</button>
+			</Button>
 
 			{query.isFetching && <p role='status'>공지글을 불러오고 있습니다.</p>}
 			{query.isError && <p role='alert'>재조회에 실패했습니다. 기존 목록을 표시합니다.</p>}
 			{query.data?.data.length === 0 && <p>등록된 공지글이 없습니다.</p>}
 
-			<ul className='notice-list'>
+			<ul className='notice-list mt-6 grid list-none gap-4 p-0'>
 				{query.data?.data.map(notice => (
-					<li key={notice.id}>
-						<h2>{notice.title}</h2>
-						<p>{notice.content}</p>
-					</li>
+					<Card component='li' key={notice.id}>
+						<Typography component='h2' variant='h6' className='mb-2 text-primary'>
+							{notice.title}
+						</Typography>
+						<p className='text-on-surface-secondary'>{notice.content}</p>
+					</Card>
 				))}
 			</ul>
 		</section>

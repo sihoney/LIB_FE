@@ -3,7 +3,6 @@
 	margin: 0 auto;
 	padding: 48px 24px;
 }
-
 .actions {
 	display: flex;
 	flex-wrap: wrap;
@@ -12,43 +11,20 @@
 	margin-bottom: 24px;
 }
 
-.notice-list {
-	padding: 0;
-	list-style: none;
+/* 기본 HTML 링크에도 테마 색상을 적용합니다. MUI 버튼 스타일은 MUI가 담당합니다. */
+.app-home a,
+.app-status a {
+	color: var(--mui-palette-primary-main, #2563eb);
+	text-decoration: underline;
 }
-
-.notice-list li {
-	margin: 16px 0;
-	padding: 16px 24px;
-	border: 1px solid #d7deea;
-	border-radius: 8px;
-	background: #fff;
-}
-
-.notice-list h2 {
-	font-size: 1.125rem;
-}
-
-a {
-	color: #24519a;
-}
-
-button {
+.app-status button {
 	padding: 8px 16px;
-	border: 1px solid #24519a;
-	border-radius: 6px;
-	font: inherit;
-	color: #fff;
-	background: #24519a;
+	border-radius: 8px;
+	background: var(--mui-palette-primary-main, #2563eb);
+	color: var(--mui-palette-primary-contrastText, #fff);
 	cursor: pointer;
 }
-
-button:disabled {
-	opacity: 0.6;
-	cursor: wait;
-}
-
-:is(button, a):focus-visible {
-	outline: 3px solid #24519a;
+:is(button, a, input):focus-visible {
+	outline: 3px solid var(--mui-palette-primary-main, #2563eb);
 	outline-offset: 3px;
 }

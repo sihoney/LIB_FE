@@ -11,7 +11,8 @@ LIB_FE는 MES_FE의 구조를 참고하는 독립적인 도서관 프론트엔�
 | 구현됨    | React 19, TypeScript 5.9, Vite 7, SWC, Oxlint, Prettier, LF 설정 |
 | 구현됨    | 프로젝트 루트 `@` 별칭, 개발 환경값, `envKeys.ts`, 환경변수 타입 |
 | 구현됨    | 앱 시작 흐름, MSW·Query·Router, Axios 조회, 테스트 공지글        |
-| 도입 예정 | Faker, Zustand, react-hook-form·Zod, MUI·Tailwind                |
+| 도입 예정 | Faker, react-hook-form·Zod                                       |
+| 구현됨    | MUI·Tailwind, 웹 테마·ThemeProvider, Zustand 테마 저장           |
 | 도입 예정 | 공통 레이아웃, 인증, 도서·회원·대출 기능                         |
 
 이 문서의 예시 경로는 목표 배치이며, 파일이 이미 존재한다는 뜻은 아니다. 사용하지 않는 빈 폴더와 기반 클래스는 생성하지 않는다. 규칙은 현재 문서·리뷰 기준이며 전체 의존 방향을 검사하는 자동 린트 규칙은 아직 없다.
@@ -185,7 +186,7 @@ Query 영속 캐시·버전 폴링, KeepAlive, 그리드 개인화, MQTT, PDF·�
 - Router의 오류 처리는 바깥에 있는 MswProvider의 시작 실패까지 처리하지 않는다.
 - HMR 시 이전 Worker는 시작 완료 후 정리한다.
 - `public/mockServiceWorker.js`는 생성 파일이다. MSW 버전 변경 시 `pnpm exec msw init public --save`로 갱신한다.
-- 도서 업무 API와 Faker·테마 Provider는 후속 단계에서 추가한다. Query·Router와 테스트 공지글 조회는 구현했다. 예제 이미지 파일은 현재 사용하지 않는다.
+- 도서 업무 API와 Faker는 후속 단계에서 추가한다. 테마 Provider는 루트 라우트에 연결했다. Query·Router와 테스트 공지글 조회는 구현했다. 예제 이미지 파일은 현재 사용하지 않는다.
 
 참고: [React use](https://react.dev/reference/react/use), [MSW worker.start](https://mswjs.io/api/setup-worker/start).
 
@@ -224,7 +225,7 @@ Query 영속 캐시·버전 폴링, KeepAlive, 그리드 개인화, MQTT, PDF·�
 | Query            | 영속 캐시 생략, 학습을 위해 캐시 시간 조정. Devtools는 MES와 같은 enableDevtools 옵션으로 연결                                                                             |
 | HTTP             | 인증·알림·업로드 인터셉터 생략, 조회·응답 해제·업무 오류만 구현                                                                                                            |
 | 공통화           | BaseRepository·BaseService·wire 생략, 반복 확인 후 추출                                                                                                                    |
-| 화면             | 기본 HTML, 인증·테마·Locale·KeepAlive 미도입. 웹/태블릿 분기 전이므로 App을 루트 라우트에서 사용                                                                           |
+| 화면             | MUI·Tailwind와 웹 테마 적용, 인증·Locale·KeepAlive 미도입. 웹/태블릿 분기 전이므로 App을 루트 라우트에서 사용                                                              |
 
 ### 라우트 생성과 검증 명령
 
@@ -235,3 +236,22 @@ Query 영속 캐시·버전 폴링, KeepAlive, 그리드 개인화, MQTT, PDF·�
 도서 기능으로 전환할 때 `modules/dev`의 타입·상수·Repository·Service·Mock 핸들러, 공지글 라우트·링크를 제거한다. HttpClient·QueryProvider·RouterProvider와 라우트 생성 설정은 재사용한다.
 
 참고: [TanStack Router Vite 설정](https://tanstack.com/router/latest/docs/installation/with-vite), [MES 공지글 Service](../../MES_FE/src/services/modules/sys/sysNoticeService.ts), [MES QueryProvider](../../MES_FE/src/contexts/QueryProvider.tsx), [MES RouterProvider](../../MES_FE/src/contexts/RouterProvider.tsx).
+
+## 12. 디자인 기반
+
+MES의 공통 테마 옵션 → 웹 테마 → ThemeProvider 구성을 따른다. 현재는 루트 라우트에서 ThemeProvider로 App을 감싼다. MES는 웹/태블릿 분기 라우트에서 감싸지만 LIB는 웹만 있으므로 분기를 만들지 않았다.
+
+- `contexts/themes/common/baseTheme.tsx`: 공통 글꼴, 밝은/어두운 팔레트, 공통 컴포넌트 기본값. MES처럼 밝은 모드 primary는 파랑, 어두운 모드는 초록이다.
+- `contexts/themes/webTheme.tsx`: 웹 글자 기준 14px, MUI spacing 4, 카드·버튼 스타일. `deepMerge`로 원본을 변형하지 않고 공통 설정을 병합한다.
+- `stores/common/themeStore.ts`: 현재 모드와 변경 함수, localStorage 영속 저장. 웹 Store만 만들고 저장 키는 `lib:web:theme-store`로 구분한다.
+- `contexts/ThemeProvider.tsx`: Store를 Context로 제공하고, 모드를 MUI에 동기화한다. MUI 자체 저장은 끄고 Zustand만 저장을 담당한다. CssBaseline은 문서 기본 스타일을 적용한다.
+- `index.css`: Tailwind 등록, Noto Sans KR, 공통 CSS 변수. Tailwind의 `text-primary` 등은 MUI의 `--mui-palette-…` 변수를 참조한다. MES와 같은 important 설정으로 명시적인 유틸리티가 MUI 스타일보다 우선한다.
+- `SwitchTheme`은 Store에 의존하므로 순수 UI 밖에 둔다. Button 래퍼는 MES처럼 공통 기본값만 제공한다.
+
+공지글에서 MUI 버튼·카드와 Tailwind 간격·문자색을 함께 사용한다. 테마 전환은 두 도구의 색상에 동시에 반영되며 새로고침 후 유지된다. 기존 전역 button 스타일은 범위를 좁혀 MUI·Devtools 버튼에 영향을 주지 않게 했다. 문서 스크롤은 MES처럼 window가 담당한다.
+
+태블릿 테마, 날짜 선택기·그리드·에디터 전용 스타일, 테마 전환 애니메이션은 사용 시점까지 생략한다. 공통 헤더·사이드바는 다음 단계다. Noto Sans KR 파일은 MES의 로컬 자산을 사용한다. Tailwind 포맷 플러그인은 아직 도입하지 않았다.
+
+확인: `/dev/notices`에서 어두운 테마 전환, 새로고침, 정상·빈 목록·오류 응답을 확인한다. 테마 Provider 바깥의 MSW 초기 로딩은 기본 CSS로 표시된다.
+
+참고: [MES ThemeProvider](../../MES_FE/src/contexts/ThemeProvider.tsx), [MES 웹 테마](../../MES_FE/src/contexts/themes/webTheme.tsx), [MUI CSS 테마 변수](https://mui.com/material-ui/customization/css-theme-variables/configuration/), [Tailwind Vite 설정](https://tailwindcss.com/docs/installation/using-vite).

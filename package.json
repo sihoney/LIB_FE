@@ -15,13 +15,19 @@
 		"routes:generate": "node scripts/generate-routes.mjs"
 	},
 	"dependencies": {
+		"@emotion/react": "11.14.0",
+		"@emotion/styled": "11.14.1",
+		"@mui/material": "7.3.11",
 		"@tanstack/react-query": "5.103.1",
 		"@tanstack/react-router": "1.170.38",
 		"axios": "1.20.0",
+		"es-toolkit": "1.52.0",
 		"react": "^19.3.0",
-		"react-dom": "^19.3.0"
+		"react-dom": "^19.3.0",
+		"zustand": "5.0.15"
 	},
 	"devDependencies": {
+		"@tailwindcss/vite": "4.3.3",
 		"@tanstack/react-query-devtools": "5.103.1",
 		"@tanstack/router-generator": "1.167.38",
 		"@tanstack/router-plugin": "1.168.40",
@@ -32,6 +38,7 @@
 		"msw": "2.15.0",
 		"oxlint": "^1.81.0",
 		"prettier": "^3.9.8",
+		"tailwindcss": "4.3.3",
 		"typescript": "~5.9.3",
 		"vite": "^7.3.6"
 	},
