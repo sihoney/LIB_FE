@@ -137,6 +137,13 @@
 					}
 				]
 			}
+		},
+		{
+			"files": ["src/services/**/*Service.ts"],
+			"rules": {
+				"react/rules-of-hooks": "off"
+			},
+			"plugins": ["react"]
 		}
 	]
 }
