@@ -3,6 +3,7 @@ import {
 	QueryClientProvider,
 	type QueryClientProviderProps,
 } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 // MES처럼 인스턴스를 모듈에서 한 번 생성합니다. 영속 캐시는 아직 도입하지 않습니다.
 export const queryClient = new QueryClient({
@@ -19,8 +20,15 @@ export const queryClient = new QueryClient({
 	},
 });
 
-const QueryProvider = ({ children }: Omit<QueryClientProviderProps, 'client'>) => (
-	<QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+interface IProps extends Omit<QueryClientProviderProps, 'client'> {
+	enableDevtools?: boolean;
+}
+
+const QueryProvider = ({ children, enableDevtools = true, ...props }: IProps) => (
+	<QueryClientProvider client={queryClient} {...props}>
+		{children}
+		{enableDevtools && <ReactQueryDevtools initialIsOpen={false} />}
+	</QueryClientProvider>
 );
 
 export default QueryProvider;

@@ -28,7 +28,8 @@
 		"oxlint": "^1.81.0",
 		"prettier": "^3.9.8",
 		"typescript": "~5.9.3",
-		"vite": "^7.3.6"
+		"vite": "^7.3.6",
+		"@tanstack/react-query-devtools": "5.103.1"
 	},
 	"msw": {
 		"workerDirectory": [
