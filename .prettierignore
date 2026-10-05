@@ -9,3 +9,5 @@ storybook-static/
 pnpm-lock.yaml
 src/routeTree.gen.ts
 public/mockServiceWorker.js
+
+.tanstack/

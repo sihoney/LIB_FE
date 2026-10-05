@@ -1,10 +1,21 @@
 import '@/src/App.css';
+import { Link } from '@tanstack/react-router';
+import type { ReactNode } from 'react';
 
-const App = () => (
+interface IProps {
+	children: ReactNode;
+}
+
+// MES의 App처럼 라우트가 전달한 화면을 감싸는 공통 틀입니다.
+const App = ({ children }: IProps) => (
 	<main className='app-home'>
-		<p className='app-home__label'>LIB</p>
-		<h1>도서관 관리</h1>
-		<p>도서 · 회원 · 대출 관리 화면을 준비하고 있습니다.</p>
+		<nav className='actions' aria-label='기본 메뉴'>
+			<Link to='/'>LIB 시작 화면</Link>
+			<Link to='/dev/notices' search={{ scenario: 'success' }}>
+				공지글
+			</Link>
+		</nav>
+		{children}
 	</main>
 );
 

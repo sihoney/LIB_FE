@@ -1,11 +1,54 @@
 .app-home {
-	max-width: 720px;
+	max-width: 800px;
 	margin: 0 auto;
-	padding: 80px 24px;
+	padding: 48px 24px;
 }
 
-.app-home__label {
-	color: #315da8;
-	font-weight: 700;
-	letter-spacing: 0.15em;
+.actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 16px;
+	margin-bottom: 24px;
+}
+
+.notice-list {
+	padding: 0;
+	list-style: none;
+}
+
+.notice-list li {
+	margin: 16px 0;
+	padding: 16px 24px;
+	border: 1px solid #d7deea;
+	border-radius: 8px;
+	background: #fff;
+}
+
+.notice-list h2 {
+	font-size: 1.125rem;
+}
+
+a {
+	color: #24519a;
+}
+
+button {
+	padding: 8px 16px;
+	border: 1px solid #24519a;
+	border-radius: 6px;
+	font: inherit;
+	color: #fff;
+	background: #24519a;
+	cursor: pointer;
+}
+
+button:disabled {
+	opacity: 0.6;
+	cursor: wait;
+}
+
+:is(button, a):focus-visible {
+	outline: 3px solid #24519a;
+	outline-offset: 3px;
 }

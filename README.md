@@ -49,10 +49,16 @@ See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rule
 
 `pnpm build`는 기본 production 모드이므로 `.env.development`를 읽지 않습니다. 배포 환경에서는 API 주소를 주입하고, 기본 `/api`를 사용하려면 배포 서버에서 해당 경로를 연결해야 합니다. `VITE_` 값은 빌드에 포함되는 공개 설정으로 비밀값을 넣으면 안 됩니다.
 
-MSW가 활성화되어 있으면 Worker 준비가 끝난 뒤 화면을 표시합니다. 준비 중 안내를 표시하며, MES와 동일하게 MSW 시작 실패를 처리하는 별도 오류 화면은 두지 않습니다. 현재 업무 핸들러 목록은 비어 있으므로 모든 요청은 실제 네트워크로 통과하며, 도서 Mock 응답과 Faker 데이터는 후속 단계에서 추가합니다. 앱 시작 흐름은 [아키텍처 문서](docs/architecture.md#10-앱-초기화)를 참고하세요.
+MSW가 활성화되어 있으면 Worker 준비가 끝난 뒤 화면을 표시합니다. 준비 중 안내를 표시하며, MES와 동일하게 MSW 시작 실패를 처리하는 별도 오류 화면은 두지 않습니다. 테스트 공지글 조회 핸들러가 연결되어 있습니다. 나머지 요청은 실제 네트워크로 통과하며, 도서 Mock 응답과 Faker 데이터는 후속 단계에서 추가합니다. 앱 시작 흐름은 [아키텍처 문서](docs/architecture.md#10-앱-초기화)를 참고하세요.
+
+## 테스트용 공지글
+
+pnpm dev 실행 후 /dev/notices에서 정상·빈 목록·오류 응답과 재조회를 확인합니다. QueryProvider와 RouterProvider 연결을 학습하기 위한 임시 업무입니다. 오류 응답은 의도적인 지속 실패이며, 시작 화면으로 돌아가 정상 응답을 선택하면 복구됩니다.
+
+라우트 트리는 자동 생성합니다. pnpm lint와 pnpm build는 타입 검사 전에 pnpm routes:generate를 실행하므로 새 checkout에서도 실행할 수 있습니다. 자세한 MES 대응과 단순화 범위는 [아키텍처 문서](docs/architecture.md)를 참고하세요.
 
 ## Query Devtools
 
-개발 서버에서 화면 모서리의 TanStack Query Devtools 버튼을 눌러 Query key·응답 데이터·조회 상태를 확인합니다. 실제 조회를 실행한 화면에서 해당 Query를 확인할 수 있습니다.
+개발 서버에서 /dev/notices에 접속하고 화면 모서리의 TanStack Query Devtools 버튼을 눌러 Query key·응답 데이터·조회 상태를 확인합니다. 정상 응답과 빈 목록을 선택하면 조건별 Query가 구분되어 표시됩니다.
 
 QueryProvider는 MES와 동일하게 enableDevtools 옵션을 받으며 기본값은 true입니다. 숨기려면 `<QueryProvider enableDevtools={false}>`로 지정합니다. 패널은 처음에 닫혀 있고, 일반 production 빌드에서는 라이브러리가 개발 도구를 제외합니다.

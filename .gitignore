@@ -28,3 +28,7 @@ dist-ssr
 .env.*
 !.env.development
 !.env.example
+
+# TanStack Router 생성 결과
+.tanstack/
+src/routeTree.gen.ts

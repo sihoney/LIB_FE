@@ -4,15 +4,15 @@
 
 LIB_FE는 MES_FE의 구조를 참고하는 독립적인 도서관 프론트엔드다. MSW·Faker로 화면과 업무 흐름을 먼저 검증하고, 이후 별도 LIB_BE의 API로 연결한다. MES의 구조가 해결하는 문제를 이해하면서 필요한 공통화를 단계적으로 진행한다.
 
-2026-10-04 기준:
+2026-10-05 기준:
 
-| 상태      | 구성                                                                            |
-| --------- | ------------------------------------------------------------------------------- |
-| 구현됨    | React 19, TypeScript 5.9, Vite 7, SWC, Oxlint, Prettier, LF 설정                |
-| 구현됨    | 프로젝트 루트 `@` 별칭, 개발 환경값, `envKeys.ts`, 환경변수 타입                |
-| 구현됨    | 앱 시작 흐름, MSW 준비 대기, LIB 시작 화면                                      |
-| 도입 예정 | TanStack Router·Query, Axios, Faker, Zustand, react-hook-form·Zod, MUI·Tailwind |
-| 도입 예정 | 공통 레이아웃, 인증, 도서·회원·대출 기능, Repository·Service                    |
+| 상태      | 구성                                                             |
+| --------- | ---------------------------------------------------------------- |
+| 구현됨    | React 19, TypeScript 5.9, Vite 7, SWC, Oxlint, Prettier, LF 설정 |
+| 구현됨    | 프로젝트 루트 `@` 별칭, 개발 환경값, `envKeys.ts`, 환경변수 타입 |
+| 구현됨    | 앱 시작 흐름, MSW·Query·Router, Axios 조회, 테스트 공지글        |
+| 도입 예정 | Faker, Zustand, react-hook-form·Zod, MUI·Tailwind                |
+| 도입 예정 | 공통 레이아웃, 인증, 도서·회원·대출 기능                         |
 
 이 문서의 예시 경로는 목표 배치이며, 파일이 이미 존재한다는 뜻은 아니다. 사용하지 않는 빈 폴더와 기반 클래스는 생성하지 않는다. 규칙은 현재 문서·리뷰 기준이며 전체 의존 방향을 검사하는 자동 린트 규칙은 아직 없다.
 
@@ -132,7 +132,7 @@ MSW HTTP 핸들러 → Mock 업무 로직·Repository → Mock 저장소
 - Faker는 초기화에 사용한다. 동일 seed와 제어 가능한 기준 날짜, 재고 0·연체 등 고정 사례를 둔다.
 - Mock 데이터 유지·초기화는 Mock 저장소의 책임이며, 화면용 Zustand 서버 목록으로 구현하지 않는다.
 - Mock 업무 규칙은 개발용 시뮬레이션이다. 실제 인증·권한·트랜잭션·동시성은 LIB_BE 구현 후 별도 검증한다.
-- `ENV_ENABLE_MSW`가 true이면 `MswProvider`가 Worker를 시작하고 완료 후 하위 화면을 렌더링한다. false이면 Worker 모듈을 가져오지 않는다. 현재 업무 핸들러는 비어 있으며, 미처리 요청은 실제 네트워크로 통과한다.
+- `ENV_ENABLE_MSW`가 true이면 `MswProvider`가 Worker를 시작하고 완료 후 하위 화면을 렌더링한다. false이면 Worker 모듈을 가져오지 않는다. 테스트 공지글 핸들러를 연결했으며, 미처리 요청은 실제 네트워크로 통과한다.
 
 ## 7. 도서 조회 기능의 파일 연결 예시
 
@@ -176,15 +176,62 @@ Query 영속 캐시·버전 폴링, KeepAlive, 그리드 개인화, MQTT, PDF·�
 
 ## 10. 앱 초기화
 
-`main.tsx`는 `StrictMode → MswProvider → App` 순서로 구성한다.
+`main.tsx`는 `StrictMode → MswProvider → QueryProvider → RouterProvider → 라우트의 App` 순서로 구성한다.
 
 - `MswProvider`는 모듈 범위의 Promise를 `use()`로 읽는다. 대기 중에는 `Suspense`가 `AppLoading`을 표시한다.
 - MSW 활성화 조건은 MES와 동일하게 `ENV_ENABLE_MSW`다. 개발 모드에서는 `.env.development` 기본값이 true이며, production 기본값은 false다. 공개 배포에서는 활성화하지 않는다.
 - Worker URL은 `ENV_BASE_URL`을 사용하여 하위 경로 배포에서도 올바르게 해석한다.
-- MES와 동일하게 MSW 시작 실패를 처리하는 별도 최상위 오류 화면은 두지 않는다. Router 도입 시 MES의 `ErrorComponent`와 라우트 오류 처리 방식을 적용한다.
+- MES와 동일하게 MSW 시작 실패를 처리하는 별도 최상위 오류 화면은 두지 않는다. Router에서 MES의 `ErrorComponent`와 라우트 오류 처리 방식을 적용한다.
 - Router의 오류 처리는 바깥에 있는 MswProvider의 시작 실패까지 처리하지 않는다.
 - HMR 시 이전 Worker는 시작 완료 후 정리한다.
 - `public/mockServiceWorker.js`는 생성 파일이다. MSW 버전 변경 시 `pnpm exec msw init public --save`로 갱신한다.
-- 업무 API와 Faker, Query·Router·테마 Provider는 후속 단계에서 추가한다. 예제 이미지 파일은 현재 사용하지 않는다.
+- 도서 업무 API와 Faker·테마 Provider는 후속 단계에서 추가한다. Query·Router와 테스트 공지글 조회는 구현했다. 예제 이미지 파일은 현재 사용하지 않는다.
 
 참고: [React use](https://react.dev/reference/react/use), [MSW worker.start](https://mswjs.io/api/setup-worker/start).
+
+## 11. 테스트용 공지글과 Query·Router
+
+2026-10-05: 도서 업무를 시작하기 전에 QueryProvider와 RouterProvider를 확인하기 위해 `modules/dev`에 공지글 조회만 추가했다. 이는 도서 기능보다 먼저 공통 기반을 확인하려는 학습용 예외이며, 최종 도서관 업무로 편입하지 않는다.
+
+### 실행과 확인
+
+- `pnpm dev` 실행 후 `/`에서 시작 화면, `/dev/notices`에서 공지글 목록을 확인한다.
+- 개발 기본 환경은 MSW가 활성화된다. `scenario=success|empty|error` 검색 파라미터로 정상 3건·빈 목록·업무 실패를 선택한다. 잘못된 값은 정상으로 해석한다.
+- 재조회 버튼은 현재 Query를 다시 요청한다. 첫 조회 실패는 라우트 오류 화면으로 전달하며, 재조회 실패는 기존 목록을 유지하고 안내한다.
+- 오류 화면의 다시 시도는 MES처럼 Query 상태와 라우트 오류 상태를 초기화한다. `scenario=error`는 의도적인 지속 실패이므로 다시 시도해도 실패한다. 시작 화면으로 돌아가 정상 응답을 선택하면 된다.
+- MSW 비활성화 시에는 실제 API 주소로 요청한다. LIB_BE가 아직 없다면 조회 실패가 정상이다.
+- 기본 production 빌드는 MSW가 비활성화되어 가짜 성공 응답을 제공하지 않는다. 현재 학습용 공지글 경로 자체는 production에서도 존재한다. 실서비스 배포 전 테스트 모듈을 제거한다.
+
+### 요청과 상태
+
+`공지글 페이지 → NoticeService → NoticeRepository → HttpClient → MSW 핸들러`로 연결한다. `services/services.ts`에서 인스턴스를 한 번 조립한다.
+
+- API: `POST /v2/Dev/Notice/GetNoticeList/GetData`.
+- 요청: `{ data: { scenario }, skip: 0, take: 20 }`.
+- 응답: `{ success, returnMess, returnMessCode, data, totalRecords }`. 성공 시 data는 공지 배열이며 각 항목은 id·title·content를 가진다.
+- Query key에 모듈·signature·functionCode·요청 본문을 포함하여 서로 다른 조건의 캐시를 분리한다. 취소 신호는 Repository를 거쳐 Axios로 전달한다.
+- QueryClient는 메모리에 하나만 생성한다. staleTime 30초, gcTime 5분이며, MES처럼 자동 재시도·포커스/재접속/마운트 시 자동 재조회를 끈다. 따라서 시간이 지나 stale이 되어도 단순 재방문만으로 갱신되지 않으며, 재조회 버튼으로 갱신한다. 캐시는 페이지 새로고침 시 사라진다.
+- Mock은 정적 3건과 350ms 지연을 사용한다. 업무 실패는 HTTP 200의 success=false를 반환하며, HttpClient가 이를 오류로 전환한다. 실제 HTTP 오류 역시 Axios에서 reject된다.
+
+### MES를 따르는 부분과 단순화한 부분
+
+| 항목             | 적용                                                                                                                                                                       |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Provider 순서    | MSW → Query → Router, App은 라우트 화면을 감싸는 틀                                                                                                                        |
+| 폴더와 요청 계층 | MES의 types·consts·repositories·services 분리, 클래스 Service의 Query 훅, POST 조회 규약                                                                                   |
+| Service 린트     | MES와 같은 `src/services/**/*Service.ts`에만 rules-of-hooks 예외 적용. use* 메서드는 컴포넌트/훅 최상위에서 순서가 바뀌지 않게 호출하며 조건문·이벤트에서 호출하지 않는다. |
+| 파일 기반 라우팅 | pages·routeTree.gen.ts·Vite 플러그인, Router 오류/없는 경로 화면                                                                                                           |
+| Query            | 영속 캐시 생략, 학습을 위해 캐시 시간 조정. Devtools는 MES와 같은 enableDevtools 옵션으로 연결                                                                             |
+| HTTP             | 인증·알림·업로드 인터셉터 생략, 조회·응답 해제·업무 오류만 구현                                                                                                            |
+| 공통화           | BaseRepository·BaseService·wire 생략, 반복 확인 후 추출                                                                                                                    |
+| 화면             | 기본 HTML, 인증·테마·Locale·KeepAlive 미도입. 웹/태블릿 분기 전이므로 App을 루트 라우트에서 사용                                                                           |
+
+### 라우트 생성과 검증 명령
+
+`tsr.config.json`에 생성 경로를 모은다. Vite 플러그인은 개발 중 자동 생성·코드 분할을 수행한다. `pnpm routes:generate`는 같은 설정으로 독립 실행하며, lint:type과 build가 타입 검사 전에 이를 호출한다. MES의 설정에 새 checkout을 위한 생성 명령을 보완한 것이다.
+
+`src/routeTree.gen.ts`와 `.tanstack/`는 생성 결과이므로 Git에서 제외한다. 생성 파일은 직접 편집하지 않는다. `pnpm lint`, `pnpm build`로 검증한다.
+
+도서 기능으로 전환할 때 `modules/dev`의 타입·상수·Repository·Service·Mock 핸들러, 공지글 라우트·링크를 제거한다. HttpClient·QueryProvider·RouterProvider와 라우트 생성 설정은 재사용한다.
+
+참고: [TanStack Router Vite 설정](https://tanstack.com/router/latest/docs/installation/with-vite), [MES 공지글 Service](../../MES_FE/src/services/modules/sys/sysNoticeService.ts), [MES QueryProvider](../../MES_FE/src/contexts/QueryProvider.tsx), [MES RouterProvider](../../MES_FE/src/contexts/RouterProvider.tsx).

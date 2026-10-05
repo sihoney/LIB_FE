@@ -5,21 +5,26 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite",
-		"build": "tsc -b && vite build",
+		"build": "pnpm routes:generate && tsc -b && vite build",
 		"lint": "pnpm lint:type && pnpm lint:oxlint && pnpm format:check",
 		"preview": "vite preview",
-		"lint:type": "tsc -b --noEmit",
+		"lint:type": "pnpm routes:generate && tsc -b --noEmit",
 		"lint:oxlint": "oxlint --deny-warnings --report-unused-disable-directives",
 		"format:check": "prettier --check .",
-		"format": "prettier --write ."
+		"format": "prettier --write .",
+		"routes:generate": "node scripts/generate-routes.mjs"
 	},
 	"dependencies": {
 		"@tanstack/react-query": "5.103.1",
+		"@tanstack/react-router": "1.170.38",
 		"axios": "1.20.0",
 		"react": "^19.3.0",
 		"react-dom": "^19.3.0"
 	},
 	"devDependencies": {
+		"@tanstack/react-query-devtools": "5.103.1",
+		"@tanstack/router-generator": "1.167.38",
+		"@tanstack/router-plugin": "1.168.40",
 		"@types/node": "^24.13.6",
 		"@types/react": "^19.3.0",
 		"@types/react-dom": "^19.3.0",
@@ -28,8 +33,7 @@
 		"oxlint": "^1.81.0",
 		"prettier": "^3.9.8",
 		"typescript": "~5.9.3",
-		"vite": "^7.3.6",
-		"@tanstack/react-query-devtools": "5.103.1"
+		"vite": "^7.3.6"
 	},
 	"msw": {
 		"workerDirectory": [

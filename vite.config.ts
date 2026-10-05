@@ -1,3 +1,4 @@
+import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import react from '@vitejs/plugin-react-swc';
 import { fileURLToPath, URL } from 'node:url';
 import { defineConfig, loadEnv } from 'vite';
@@ -12,7 +13,15 @@ export default defineConfig(({ mode }) => {
 		throw new Error('VITE_DEV_PORT는 1~65535 사이의 정수여야 합니다.');
 	}
 	return {
-		plugins: [react()],
+		plugins: [
+			// tanstackRouter: 개발 서버나 빌드 실행 시 실행
+			tanstackRouter({
+				target: 'react',
+				autoCodeSplitting: true,
+			}),
+			react(),
+		],
+		optimizeDeps: { entries: ['index.html', 'src/pages/**/*.tsx'] },
 		resolve: {
 			alias: { '@': fileURLToPath(new URL('.', import.meta.url)) },
 		},
