@@ -1,17 +1,8 @@
-import App from '@/src/App';
-import ThemeProvider from '@/src/contexts/ThemeProvider';
-import webTheme from '@/src/contexts/themes/webTheme';
-import { getThemeStore } from '@/src/stores/common/themeStore';
 import NotFoundComponent from '@/src/pages/-routeComponents/NotFoundComponent';
 import { createRootRoute, Outlet } from '@tanstack/react-router';
 
-const Component = () => (
-	<ThemeProvider theme={webTheme} store={getThemeStore()}>
-		<App>
-			<Outlet />
-		</App>
-	</ThemeProvider>
-);
+// 루트는 화면 연결과 없는 경로 처리를 담당하고, 웹 테마는 (web)에서 적용합니다.
+const Component = () => <Outlet />;
 
 export const Route = createRootRoute({
 	component: Component,

@@ -186,7 +186,7 @@ Query 영속 캐시·버전 폴링, KeepAlive, 그리드 개인화, MQTT, PDF·�
 - Router의 오류 처리는 바깥에 있는 MswProvider의 시작 실패까지 처리하지 않는다.
 - HMR 시 이전 Worker는 시작 완료 후 정리한다.
 - `public/mockServiceWorker.js`는 생성 파일이다. MSW 버전 변경 시 `pnpm exec msw init public --save`로 갱신한다.
-- 도서 업무 API와 Faker는 후속 단계에서 추가한다. 테마 Provider는 루트 라우트에 연결했다. Query·Router와 테스트 공지글 조회는 구현했다. 예제 이미지 파일은 현재 사용하지 않는다.
+- 도서 업무 API와 Faker는 후속 단계에서 추가한다. 테마 Provider는 (web) 라우트에 연결했다. Query·Router와 테스트 공지글 조회는 구현했다. 예제 이미지 파일은 현재 사용하지 않는다.
 
 참고: [React use](https://react.dev/reference/react/use), [MSW worker.start](https://mswjs.io/api/setup-worker/start).
 
@@ -225,7 +225,7 @@ Query 영속 캐시·버전 폴링, KeepAlive, 그리드 개인화, MQTT, PDF·�
 | Query            | 영속 캐시 생략, 학습을 위해 캐시 시간 조정. Devtools는 MES와 같은 enableDevtools 옵션으로 연결                                                                             |
 | HTTP             | 인증·알림·업로드 인터셉터 생략, 조회·응답 해제·업무 오류만 구현                                                                                                            |
 | 공통화           | BaseRepository·BaseService·wire 생략, 반복 확인 후 추출                                                                                                                    |
-| 화면             | MUI·Tailwind와 웹 테마 적용, 인증·Locale·KeepAlive 미도입. 웹/태블릿 분기 전이므로 App을 루트 라우트에서 사용                                                              |
+| 화면             | MUI·Tailwind와 웹 테마 적용, 인증·Locale·KeepAlive 미도입. MES와 같은 (web) 라우트에서 ThemeProvider와 App을 사용                                                          |
 
 ### 라우트 생성과 검증 명령
 
@@ -239,7 +239,7 @@ Query 영속 캐시·버전 폴링, KeepAlive, 그리드 개인화, MQTT, PDF·�
 
 ## 12. 디자인 기반
 
-MES의 공통 테마 옵션 → 웹 테마 → ThemeProvider 구성을 따른다. 현재는 루트 라우트에서 ThemeProvider로 App을 감싼다. MES는 웹/태블릿 분기 라우트에서 감싸지만 LIB는 웹만 있으므로 분기를 만들지 않았다.
+MES의 공통 테마 옵션 → 웹 테마 → ThemeProvider 구성을 따른다. (web)/route.tsx에서 ThemeProvider로 App을 감싼다. MES의 웹 라우트 계층을 따르며 태블릿 라우트는 만들지 않았다.
 
 - `contexts/themes/common/baseTheme.tsx`: 공통 글꼴, 밝은/어두운 팔레트, 공통 컴포넌트 기본값. MES처럼 밝은 모드 primary는 파랑, 어두운 모드는 초록이다.
 - `contexts/themes/webTheme.tsx`: 웹 글자 기준 14px, MUI spacing 4, 카드·버튼 스타일. `deepMerge`로 원본을 변형하지 않고 공통 설정을 병합한다.
@@ -255,3 +255,21 @@ MES의 공통 테마 옵션 → 웹 테마 → ThemeProvider 구성을 따른다
 확인: `/dev/notices`에서 어두운 테마 전환, 새로고침, 정상·빈 목록·오류 응답을 확인한다. 테마 Provider 바깥의 MSW 초기 로딩은 기본 CSS로 표시된다.
 
 참고: [MES ThemeProvider](../../MES_FE/src/contexts/ThemeProvider.tsx), [MES 웹 테마](../../MES_FE/src/contexts/themes/webTheme.tsx), [MUI CSS 테마 변수](https://mui.com/material-ui/customization/css-theme-variables/configuration/), [Tailwind Vite 설정](https://tailwindcss.com/docs/installation/using-vite).
+
+## 13. 웹 라우트 구조 정리
+
+2026-10-09: MES와 같은 경로와 책임 분리를 적용했다.
+
+- `pages/__root.tsx`: Outlet과 루트의 없는 경로 처리.
+- `pages/(web)/route.tsx`: 웹 ThemeProvider와 App 적용.
+- `pages/(web)/(authenticated)/route.tsx`: 공통 레이아웃을 조립할 위치. 현재는 Outlet만 표시한다.
+- 시작 화면과 공지글을 (authenticated) 아래로 이동했다. 라우트 ID는 변경되지만 URL은 `/`, `/dev/notices`로 유지한다.
+- 루트에서 처리하는 없는 경로 화면은 MES처럼 웹 ThemeProvider·App 바깥에 표시된다. 시작 화면 링크로 웹 영역에 복귀한다.
+
+### 후속 작업
+
+- TODO: 인증 기반 구현 후 MES의 guardAuth('WEB')를 beforeLoad에 연결한다. 현재 접근 제한은 없으며, 폴더 이름이 인증을 수행하지 않는다.
+- TODO: 다음 레이아웃 단계에서 MES처럼 Header·SidebarMenu를 (authenticated)/route.tsx에서 조립한다. 기존 App의 임시 화면 구성은 이번 단계에서 유지한다.
+- 메뉴 캐시·모듈 루트 이동·KeepAlive 등 다른 의존 기능은 각 기반을 구현하는 단계에서 연결한다. 빈 인증 함수나 가짜 캐시 loader는 추가하지 않았다.
+
+검증 기준: 기존 URL의 직접 접속·새로고침·이동, 정상/빈 목록/오류 응답, 루트의 없는 경로와 복귀, 테마 저장·복원.

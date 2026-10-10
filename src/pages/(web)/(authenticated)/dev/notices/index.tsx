@@ -56,7 +56,7 @@ const Component = () => {
 	);
 };
 
-export const Route = createFileRoute('/dev/notices/')({
+export const Route = createFileRoute('/(web)/(authenticated)/dev/notices/')({
 	// validateSearch: URL의 검색 파라미터를 확인&정리하는 함수
 	validateSearch: (search: Record<string, unknown>): { scenario: TNoticeScenario } => ({
 		scenario:
