@@ -1,3 +1,5 @@
+import ButtonToggleSidebar from '@/src/pages/(web)/(authenticated)/-components/sidebars/buttons/ButtonToggleSidebar';
+import useSidebarStore from '@/src/stores/common/sidebarStore';
 import Container from '@/src/components/ui/containers/Container';
 import BoxAccount from '@/src/pages/(web)/(authenticated)/-components/sidebars/containers/BoxAccount';
 import { cn } from '@/src/utils/common/cn';
@@ -5,12 +7,8 @@ import { useMenuTree } from '@/src/hooks/common/useMenuTree';
 import BoxMenuExpanded from '@/src/pages/(web)/(authenticated)/-components/sidebars/containers/BoxMenuExpanded';
 import BoxMenuCollapsed from '@/src/pages/(web)/(authenticated)/-components/sidebars/containers/BoxMenuCollapsed';
 
-interface IProps {
-	open: boolean;
-	onToggle: () => void;
-}
-
-const SidebarMenu = ({ open, onToggle }: IProps) => {
+const SidebarMenu = () => {
+	const open = useSidebarStore(state => state.open);
 	const { data } = useMenuTree();
 
 	return (
@@ -27,16 +25,7 @@ const SidebarMenu = ({ open, onToggle }: IProps) => {
 				<Container className={cn('h-header-web border-divider shrink-0 border-r')} />
 
 				{/* [2] 접기/펼치기 버튼 */}
-				{/* TODO: MES의 ButtonToggleSidebar와 sidebarStore의 hovered/setHovered를 연결해 hover 노출·해제 지연을 적용합니다. */}
-				<button
-					type='button'
-					aria-label={open ? '메뉴 접기' : '메뉴 펼치기'}
-					aria-expanded={open}
-					onClick={onToggle}
-					className='border-divider border-r p-2'
-				>
-					{open ? '메뉴 접기' : '펼치기'}
-				</button>
+				<ButtonToggleSidebar />
 
 				{/* [3] 메뉴 목록 */}
 				{open ? <BoxMenuExpanded data={data} /> : <BoxMenuCollapsed data={data} />}

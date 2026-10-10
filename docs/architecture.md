@@ -269,7 +269,7 @@ MES의 공통 테마 옵션 → 웹 테마 → ThemeProvider 구성을 따른다
 ### 후속 작업
 
 - TODO: 인증 기반 구현 후 MES의 guardAuth('WEB')를 beforeLoad에 연결한다. 현재 접근 제한은 없으며, 폴더 이름이 인증을 수행하지 않는다.
-- Header·SidebarMenu 배치는 구현했다. 접기·펼치기와 너비 애니메이션은 구현했다. 서버 메뉴·방문 탭·공유 Store는 후속 TODO다.
+- Header·SidebarMenu 배치는 구현했다. 접기·펼치기와 너비 애니메이션은 구현했다. 서버 메뉴·방문 탭·hover는 후속 TODO다.
 - 메뉴 캐시·모듈 루트 이동·KeepAlive 등 다른 의존 기능은 각 기반을 구현하는 단계에서 연결한다. 빈 인증 함수나 가짜 캐시 loader는 추가하지 않았다.
 
 검증 기준: 기존 URL의 직접 접속·새로고침·이동, 정상/빈 목록/오류 응답, 루트의 없는 경로와 복귀, 테마 저장·복원.
@@ -287,10 +287,16 @@ MES의 공통 테마 옵션 → 웹 테마 → ThemeProvider 구성을 따른다
 - SidebarMenu에는 기존 두 링크만 옮겼다. 새 메뉴 기능이 아니며 서버 메뉴 연결 전 임시 데이터다.
 - 테마 스위치 파일의 사용자 변경은 보존했다. 기존 스위치의 표시 위치만 임시 시작 화면으로 옮겼으며 헤더에는 추가하지 않았다.
 
-후속 TODO: TabsStrip·TabStrip, 서버 메뉴·권한과 useMenuTree 연결, BoxLogo·계정 데이터 연결, sidebarStore·ButtonToggleSidebar, KeepAliveOutlet, 테마 전환의 MES 공통 설정 UI 연결. 인증과 / → /dashboard 전환 TODO는 유지한다. 자동 모바일 접기와 임의의 Store 영속 저장은 추가하지 않았다.
+후속 TODO: TabsStrip·TabStrip, 서버 메뉴·권한과 useMenuTree 연결, BoxLogo·계정 데이터 연결, 사이드바 hover 및 MES 토글 버튼 스타일 연결, KeepAliveOutlet, 테마 전환의 MES 공통 설정 UI 연결. 인증과 / → /dashboard 전환 TODO는 유지한다. 자동 모바일 접기와 임의의 Store 영속 저장은 추가하지 않았다.
 
 ### 사이드바 메뉴 구현
 
 2026-10-10: `useMenuTree`에서 기존 시작 화면·공지글 경로를 타입이 보장되는 정적 메뉴 데이터로 제공한다. 서버 메뉴·권한 API는 아직 도입하지 않았다.
 
-`BoxMenuExpanded`와 `BoxMenuCollapsed`는 같은 메뉴 데이터를 표시하며 현재 경로의 활성 상태와 공지글의 `scenario=success` 검색 조건을 유지한다. 접기 버튼은 route.tsx의 로컬 state를 props로 전달받는다. 바깥 Container의 폭은 220px/80px로 전환하고, 안쪽은 목표 폭을 유지하며 overflow-hidden으로 가린다. 공유 sidebarStore·hover 동작·서버 메뉴 트리·즐겨찾기는 후속 작업이다.
+`BoxMenuExpanded`와 `BoxMenuCollapsed`는 같은 메뉴 데이터를 표시하며 현재 경로의 활성 상태와 공지글의 `scenario=success` 검색 조건을 유지한다. route.tsx·SidebarMenu·ButtonToggleSidebar는 sidebarStore의 open을 각각 구독한다. 바깥 Container의 폭은 220px/80px로 전환하고, 안쪽은 목표 폭을 유지하며 overflow-hidden으로 가린다. hover 동작·서버 메뉴 트리·즐겨찾기는 후속 작업이다.
+
+### 사이드바 Store와 버튼 분리
+
+MES와 같은 stores/common/sidebarStore.ts, sidebars/buttons/ButtonToggleSidebar.tsx로 책임을 분리했다. open·setOpen·toggle을 Store에서 제공하고 props 전달을 제거했다. Store는 메모리 상태이므로 라우트 이동 중에는 유지되고 새로고침하면 기본 펼침 상태가 된다.
+
+이번 범위는 상태 공유와 버튼 분리다. 기존 버튼의 위치·문구·항상 표시되는 동작 및 220px/80px 너비 애니메이션은 유지한다. MES의 hovered·setHovered·해제 지연, ButtonIcon·Icon과 외부 버튼 배치는 후속 TODO로 남긴다. persist·메뉴 API·Faker·방문 탭은 추가하지 않았다.

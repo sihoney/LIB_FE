@@ -3,7 +3,7 @@ import Header from '@/src/pages/(web)/(authenticated)/-components/headers/Header
 import SidebarMenu from '@/src/pages/(web)/(authenticated)/-components/sidebars/SidebarMenu';
 import { cn } from '@/src/utils/common/cn';
 import { createFileRoute, Outlet } from '@tanstack/react-router';
-import { useState } from 'react';
+import useSidebarStore from '@/src/stores/common/sidebarStore';
 
 // grid-cols-[auto_minmax(0,1fr)]
 // - [...] : Tailwind에서 CSS 값을 직접 지정하는 문법
@@ -16,8 +16,8 @@ import { useState } from 'react';
 
 // MES처럼 이 라우트에서 사이드바·헤더·본문을 조립합니다.
 const Component = () => {
-	// TODO: MES의 sidebarStore로 전환합니다. 현재는 부모·자식이 같은 open 값을 사용하도록 로컬 상태를 올립니다.
-	const [open, setOpen] = useState(true);
+	// route·메뉴·토글 버튼이 같은 Store의 open을 구독합니다.
+	const open = useSidebarStore(state => state.open);
 
 	return (
 		<Container
@@ -35,7 +35,7 @@ const Component = () => {
 				// 바깥 폭만 애니메이션하고, SidebarMenu 내부는 목표 폭으로 유지합니다.
 				style={{ width: open ? 220 : 80 }}
 			>
-				<SidebarMenu open={open} onToggle={() => setOpen(previous => !previous)} />
+				<SidebarMenu />
 			</Container>
 
 			{/* [2] 우측 영역 */}
