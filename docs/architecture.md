@@ -262,14 +262,35 @@ MES의 공통 테마 옵션 → 웹 테마 → ThemeProvider 구성을 따른다
 
 - `pages/__root.tsx`: Outlet과 루트의 없는 경로 처리.
 - `pages/(web)/route.tsx`: 웹 ThemeProvider와 App 적용.
-- `pages/(web)/(authenticated)/route.tsx`: 공통 레이아웃을 조립할 위치. 현재는 Outlet만 표시한다.
+- `pages/(web)/(authenticated)/route.tsx`: MES의 Grid로 사이드바·헤더·본문을 조립한다.
 - 시작 화면과 공지글을 (authenticated) 아래로 이동했다. 라우트 ID는 변경되지만 URL은 `/`, `/dev/notices`로 유지한다.
 - 루트에서 처리하는 없는 경로 화면은 MES처럼 웹 ThemeProvider·App 바깥에 표시된다. 시작 화면 링크로 웹 영역에 복귀한다.
 
 ### 후속 작업
 
 - TODO: 인증 기반 구현 후 MES의 guardAuth('WEB')를 beforeLoad에 연결한다. 현재 접근 제한은 없으며, 폴더 이름이 인증을 수행하지 않는다.
-- TODO: 다음 레이아웃 단계에서 MES처럼 Header·SidebarMenu를 (authenticated)/route.tsx에서 조립한다. 기존 App의 임시 화면 구성은 이번 단계에서 유지한다.
+- Header·SidebarMenu 배치는 구현했다. 접기·펼치기와 너비 애니메이션은 구현했다. 서버 메뉴·방문 탭·공유 Store는 후속 TODO다.
 - 메뉴 캐시·모듈 루트 이동·KeepAlive 등 다른 의존 기능은 각 기반을 구현하는 단계에서 연결한다. 빈 인증 함수나 가짜 캐시 loader는 추가하지 않았다.
 
 검증 기준: 기존 URL의 직접 접속·새로고침·이동, 정상/빈 목록/오류 응답, 루트의 없는 경로와 복귀, 테마 저장·복원.
+
+## 14. 공통 레이아웃 배치
+
+2026-10-10: MES의 (authenticated)/route.tsx에서 사용하는 좌측 사이드바·우측 헤더/본문 Grid를 적용했다.
+
+- App은 MES처럼 공통 Container로 children을 감싼다. 기존 800px 최대 폭·중앙 여백을 제거했다.
+- MES의 Container 래퍼와 cn(clsx + tailwind-merge)을 사용한다. MuiContainer의 disableGutters=true, maxWidth=false도 함께 적용했다.
+- 사이드바는 220px/80px 너비를 0.2초 동안 전환하며 sticky top-0, h-dvh를 사용한다. 오른쪽 헤더도 sticky top-0다.
+- index.css의 h-header-web, p-layout-web은 MES와 같은 spacing 기반 값이다.
+- 페이지 본문은 window에서 스크롤하고, 사이드바 메뉴 영역만 독립적으로 스크롤한다.
+- Header는 MES의 컨테이너만 만들었으며 현재 내용은 비어 있다. 임시 화면 제목을 추가하지 않았다.
+- SidebarMenu에는 기존 두 링크만 옮겼다. 새 메뉴 기능이 아니며 서버 메뉴 연결 전 임시 데이터다.
+- 테마 스위치 파일의 사용자 변경은 보존했다. 기존 스위치의 표시 위치만 임시 시작 화면으로 옮겼으며 헤더에는 추가하지 않았다.
+
+후속 TODO: TabsStrip·TabStrip, 서버 메뉴·권한과 useMenuTree 연결, BoxLogo·계정 데이터 연결, sidebarStore·ButtonToggleSidebar, KeepAliveOutlet, 테마 전환의 MES 공통 설정 UI 연결. 인증과 / → /dashboard 전환 TODO는 유지한다. 자동 모바일 접기와 임의의 Store 영속 저장은 추가하지 않았다.
+
+### 사이드바 메뉴 구현
+
+2026-10-10: `useMenuTree`에서 기존 시작 화면·공지글 경로를 타입이 보장되는 정적 메뉴 데이터로 제공한다. 서버 메뉴·권한 API는 아직 도입하지 않았다.
+
+`BoxMenuExpanded`와 `BoxMenuCollapsed`는 같은 메뉴 데이터를 표시하며 현재 경로의 활성 상태와 공지글의 `scenario=success` 검색 조건을 유지한다. 접기 버튼은 route.tsx의 로컬 state를 props로 전달받는다. 바깥 Container의 폭은 220px/80px로 전환하고, 안쪽은 목표 폭을 유지하며 overflow-hidden으로 가린다. 공유 sidebarStore·hover 동작·서버 메뉴 트리·즐겨찾기는 후속 작업이다.

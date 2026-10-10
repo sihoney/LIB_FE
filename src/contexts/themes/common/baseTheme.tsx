@@ -30,6 +30,8 @@ const baseTheme: ThemeOptions = {
 		},
 	},
 	components: {
+		// MES처럼 레이아웃 Container의 기본 좌우 여백·최대 폭을 해제합니다.
+		MuiContainer: { defaultProps: { disableGutters: true, maxWidth: false } },
 		MuiCssBaseline: {
 			styleOverrides: documentStyles,
 		},

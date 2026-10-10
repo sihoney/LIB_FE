@@ -31,6 +31,9 @@
 
 /* Tailwind도 MUI가 생성한 색상 변수를 읽습니다. 색상 원본은 baseTheme입니다. */
 @theme inline {
+	/* MES 웹 레이아웃과 동일한 크기 기준입니다. */
+	--spacing-layout-web: calc(var(--spacing) * 2);
+	--height-header-web: calc(var(--spacing) * 12);
 	--font-noto: 'Noto Sans KR', sans-serif;
 	--color-primary: var(--mui-palette-primary-main);
 	--color-secondary: var(--mui-palette-secondary-main);

@@ -1,8 +1,3 @@
-.app-home {
-	max-width: 800px;
-	margin: 0 auto;
-	padding: 48px 24px;
-}
 .actions {
 	display: flex;
 	flex-wrap: wrap;
@@ -12,7 +7,7 @@
 }
 
 /* 기본 HTML 링크에도 테마 색상을 적용합니다. MUI 버튼 스타일은 MUI가 담당합니다. */
-.app-home a,
+.MuiContainer-root a,
 .app-status a {
 	color: var(--mui-palette-primary-main, #2563eb);
 	text-decoration: underline;
