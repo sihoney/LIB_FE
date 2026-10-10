@@ -1,0 +1,10 @@
+import ChevronLeft from '@mui/icons-material/ChevronLeft';
+import ChevronRight from '@mui/icons-material/ChevronRight';
+
+// MES의 이름 기반 아이콘 매핑에서 현재 사용하는 아이콘만 등록합니다.
+export const ICONS = {
+	chevronLeft: ChevronLeft,
+	chevronRight: ChevronRight,
+} as const;
+
+export type TIconName = keyof typeof ICONS; // type TIconName = 'chevronLeft' | 'chevronRight';

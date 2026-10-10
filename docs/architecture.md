@@ -300,3 +300,9 @@ MES의 공통 테마 옵션 → 웹 테마 → ThemeProvider 구성을 따른다
 MES와 같은 stores/common/sidebarStore.ts, sidebars/buttons/ButtonToggleSidebar.tsx로 책임을 분리했다. open·setOpen·toggle을 Store에서 제공하고 props 전달을 제거했다. Store는 메모리 상태이므로 라우트 이동 중에는 유지되고 새로고침하면 기본 펼침 상태가 된다.
 
 이번 범위는 상태 공유와 버튼 분리다. 기존 버튼의 위치·문구·항상 표시되는 동작 및 220px/80px 너비 애니메이션은 유지한다. MES의 hovered·setHovered·해제 지연, ButtonIcon·Icon과 외부 버튼 배치는 후속 TODO로 남긴다. persist·메뉴 API·Faker·방문 탭은 추가하지 않았다.
+
+### 사이드바 hover와 경계 버튼
+
+MES의 hovered·setHovered와 es-toolkit debounce(500ms)를 적용했다. 사이드바 진입 시 즉시 표시하며 이탈 후 500ms가 지나면 숨긴다. 재진입은 예약된 숨김을 취소한다. 버튼은 overflow-hidden 컨테이너의 형제에 배치하고 MES의 방향 아이콘·위치·스타일을 적용한다.
+
+ButtonIcon·Icon은 MES 래퍼를 사용하며 icon 매핑에는 현재 필요한 두 아이콘만 포함한다. 다국어 기반은 없어 한국어 문구를 직접 사용하고 TODO를 남겼다. 키보드 포커스 시에도 버튼이 보이도록 focus-visible 표시를 보완했다. 220px/80px 전환과 기존 로고 변경은 유지한다. 앞 절의 hover·버튼 스타일 TODO는 이 작업으로 완료했다.

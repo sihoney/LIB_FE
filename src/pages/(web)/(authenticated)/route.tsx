@@ -18,13 +18,14 @@ import useSidebarStore from '@/src/stores/common/sidebarStore';
 const Component = () => {
 	// route·메뉴·토글 버튼이 같은 Store의 open을 구독합니다.
 	const open = useSidebarStore(state => state.open);
+	const setHovered = useSidebarStore(state => state.setHovered);
 
 	return (
 		<Container
 			component='section'
 			className={cn('grid grid-cols-[auto_minmax(0,1fr)] grid-rows-[1fr]')}
 		>
-			{/* [1] 좌측 영역 */}
+			{/* [1] 좌측 영역 -- 사이드바*/}
 			<Container
 				component='article'
 				className={cn(
@@ -34,11 +35,13 @@ const Component = () => {
 				)}
 				// 바깥 폭만 애니메이션하고, SidebarMenu 내부는 목표 폭으로 유지합니다.
 				style={{ width: open ? 220 : 80 }}
+				onMouseEnter={() => setHovered(true)}
+				onMouseLeave={() => setHovered(false)}
 			>
 				<SidebarMenu />
 			</Container>
 
-			{/* [2] 우측 영역 */}
+			{/* [2] 우측 영역 -- 헤더 & 본문*/}
 			<Container component='section' className={cn('grid grid-cols-1 grid-rows-[auto_1fr]')}>
 				<Header />
 				<Container component='article' className={cn('p-layout-web relative')}>
