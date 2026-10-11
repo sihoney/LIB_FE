@@ -14,3 +14,8 @@ export const NOTICE_CREATE_META = {
 	signature: 'Notice',
 	functionCode: 'Create',
 } as const;
+
+export const NOTICE_UPDATE_META = {
+	signature: 'Notice',
+	functionCode: 'Update',
+} as const;

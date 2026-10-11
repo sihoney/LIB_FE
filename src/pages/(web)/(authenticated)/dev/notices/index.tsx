@@ -1,3 +1,5 @@
+import ModalUpdateNotice from '@/src/pages/(web)/(authenticated)/dev/notices/-components/modals/ModalUpdateNotice';
+import type { INotice } from '@/src/types/modules/dev/notice';
 import ModalCreateNotice from '@/src/pages/(web)/(authenticated)/dev/notices/-components/modals/ModalCreateNotice';
 import { useState, type FormEvent } from 'react';
 import Button from '@/src/components/ui/buttons/Button';
@@ -10,6 +12,7 @@ const PAGE_SIZE = 10;
 const Component = () => {
 	// TODO: 반복되는 모달 상태를 확인한 뒤 MES의 useModalState로 옮깁니다.
 	const [createNotice, setCreateNotice] = useState(false);
+	const [updateNotice, setUpdateNotice] = useState<INotice | null>(null);
 
 	// 공통화 전에 입력값 → 적용 조건 → API 요청 흐름을 이 페이지에서 직접 학습합니다.
 	// TODO: 두 번째 목록에서 반복을 확인한 뒤 MES의 검색 툴바·useTableState로 옮깁니다.
@@ -81,6 +84,15 @@ const Component = () => {
 				<ModalCreateNotice open={createNotice} onClose={() => setCreateNotice(false)} />
 			)}
 
+			{updateNotice && (
+				<ModalUpdateNotice
+					key={updateNotice.id}
+					data={updateNotice}
+					open={!!updateNotice}
+					onClose={() => setUpdateNotice(null)}
+				/>
+			)}
+
 			{/* 로딩 상태 */}
 			{query.isFetching && (
 				<p role='status'>
@@ -113,6 +125,16 @@ const Component = () => {
 							</Link>
 						</Typography>
 						<p className='text-on-surface-secondary'>{notice.content}</p>
+						<Button
+							type='button'
+							variant='outlined'
+							className='mt-2'
+							aria-label={notice.title + ' 수정'}
+							disabled={query.isFetching}
+							onClick={() => setUpdateNotice(notice)}
+						>
+							수정
+						</Button>
 					</Card>
 				))}
 			</ul>

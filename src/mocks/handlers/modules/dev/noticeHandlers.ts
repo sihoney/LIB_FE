@@ -1,13 +1,19 @@
 import { notices } from '@/src/mocks/data/modules/dev/notices';
 import { ENV_API_BASE_URL } from '@/src/consts/common/envKeys';
 import {
+	NOTICE_UPDATE_META,
 	NOTICE_CREATE_META,
 	NOTICE_DETAIL_META,
 	NOTICE_META,
 	NOTICE_MODULE,
 } from '@/src/consts/modules/dev/notice';
 import type { IRequestBody, IResponseBody } from '@/src/types/common/repository';
-import type { INotice, INoticeCreate, INoticeSearch } from '@/src/types/modules/dev/notice';
+import type {
+	INotice,
+	INoticeCreate,
+	INoticeSearch,
+	INoticeUpdate,
+} from '@/src/types/modules/dev/notice';
 import { delay, http, HttpResponse } from 'msw';
 
 // new URL(상대 주소, 기준주소);
@@ -26,6 +32,11 @@ const detailEndpoint = new URL(
 
 const createEndpoint = new URL(
 	`v2/${NOTICE_MODULE}/${NOTICE_CREATE_META.signature}/${NOTICE_CREATE_META.functionCode}/Update`,
+	apiBase,
+).href;
+
+const updateEndpoint = new URL(
+	`v2/${NOTICE_MODULE}/${NOTICE_UPDATE_META.signature}/${NOTICE_UPDATE_META.functionCode}/Update`,
 	apiBase,
 ).href;
 
@@ -102,6 +113,55 @@ export const noticeHandlers = [
 			returnMess: '',
 			returnMessCode: 0,
 			data: notice,
+		});
+	}),
+
+	// 부분 수정: 생략된 필드는 유지하며, 빈 문자열을 보내는 경우에는 검증합니다.
+	http.post(updateEndpoint, async ({ request }) => {
+		const body = (await request.json()) as IRequestBody<INoticeUpdate>;
+		const data = body?.data;
+		await delay(350);
+		const hasTitle = data != null && Object.hasOwn(data, 'title');
+		const hasContent = data != null && Object.hasOwn(data, 'content');
+		if (
+			!data ||
+			!Number.isSafeInteger(data.id) ||
+			data.id <= 0 ||
+			(!hasTitle && !hasContent) ||
+			(hasTitle &&
+				(typeof data.title !== 'string' ||
+					!data.title.trim() ||
+					data.title.trim().length > 200)) ||
+			(hasContent && (typeof data.content !== 'string' || !data.content.trim()))
+		) {
+			return HttpResponse.json<IResponseBody<INotice | null>>({
+				success: false,
+				returnMess: '공지 ID와 수정할 제목·본문을 확인해 주세요.',
+				returnMessCode: 'INVALID_NOTICE',
+				data: null,
+			});
+		}
+		const index = notices.findIndex(notice => notice.id === data.id);
+		if (index < 0) {
+			return HttpResponse.json<IResponseBody<INotice | null>>({
+				success: false,
+				returnMess: '수정할 공지글을 찾을 수 없습니다.',
+				returnMessCode: 'NOTICE_NOT_FOUND',
+				data: null,
+			});
+		}
+		// 요청에 허용된 필드만 반영합니다. 생략된 필드와 다른 공지는 그대로 둡니다.
+		const updated: INotice = {
+			...notices[index],
+			...(hasTitle && { title: data.title!.trim() }),
+			...(hasContent && { content: data.content!.trim() }),
+		};
+		notices[index] = updated;
+		return HttpResponse.json<IResponseBody<INotice | null>>({
+			success: true,
+			returnMess: '',
+			returnMessCode: 0,
+			data: updated,
 		});
 	}),
 ];

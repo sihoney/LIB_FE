@@ -20,3 +20,8 @@ export type INoticeCreate = Pick<INotice, 'title' | 'content'>;
 
 // Pick<INotice, 'title' | 'content'>: INotice에서 `title`과 `content`만 골라 새로운 타입을 정의
 // Pick: TypeScript가 기본 제공하는 유틸리티 타입, 기존 타입에서 원하는 속성만 선택할 때 사용
+
+// 수정할 공지의 id는 필수이며 제목·본문은 변경한 필드만 보냅니다.
+export type INoticeUpdate = Pick<INotice, 'id'> & Partial<INoticeCreate>;
+// id: 필수
+// title, content: 선택

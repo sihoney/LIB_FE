@@ -1,5 +1,6 @@
 import { queryClient } from '@/src/contexts/QueryProvider';
 import {
+	NOTICE_UPDATE_META,
 	NOTICE_CREATE_META,
 	NOTICE_DETAIL_META,
 	NOTICE_META,
@@ -7,7 +8,7 @@ import {
 } from '@/src/consts/modules/dev/notice';
 import type NoticeRepository from '@/src/repositories/modules/dev/noticeRepository';
 import type { IRequestBody } from '@/src/types/common/repository';
-import type { INoticeCreate, INoticeSearch } from '@/src/types/modules/dev/notice';
+import type { INoticeCreate, INoticeSearch, INoticeUpdate } from '@/src/types/modules/dev/notice';
 import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
 
 export default class NoticeService {
@@ -47,5 +48,31 @@ export default class NoticeService {
 				queryClient.invalidateQueries({
 					queryKey: [NOTICE_MODULE, NOTICE_META.signature, NOTICE_META.functionCode],
 				}),
+		});
+
+	public usePatchNotice = () =>
+		useMutation({
+			mutationKey: [
+				NOTICE_MODULE,
+				NOTICE_UPDATE_META.signature,
+				NOTICE_UPDATE_META.functionCode,
+			],
+			mutationFn: (body: IRequestBody<INoticeUpdate>) =>
+				this.noticeRepository.patchNotice(body),
+			// MES처럼 '목록·상세 API 키로 무효화'합니다.
+			// LIB는 조회에 signal을 전달하므로 모달 제거로 상세 재조회가 취소되지 않게 완료를 기다립니다.
+			onSuccess: () =>
+				Promise.all([
+					queryClient.invalidateQueries({
+						queryKey: [NOTICE_MODULE, NOTICE_META.signature, NOTICE_META.functionCode],
+					}),
+					queryClient.invalidateQueries({
+						queryKey: [
+							NOTICE_MODULE,
+							NOTICE_DETAIL_META.signature,
+							NOTICE_DETAIL_META.functionCode,
+						],
+					}),
+				]),
 		});
 }

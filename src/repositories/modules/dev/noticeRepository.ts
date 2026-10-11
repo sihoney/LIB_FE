@@ -1,4 +1,5 @@
 import {
+	NOTICE_UPDATE_META,
 	NOTICE_CREATE_META,
 	NOTICE_DETAIL_META,
 	NOTICE_META,
@@ -6,7 +7,12 @@ import {
 } from '@/src/consts/modules/dev/notice';
 import type HttpClient from '@/src/networks/httpClient';
 import type { IRequestBody } from '@/src/types/common/repository';
-import type { INotice, INoticeCreate, INoticeSearch } from '@/src/types/modules/dev/notice';
+import type {
+	INotice,
+	INoticeCreate,
+	INoticeSearch,
+	INoticeUpdate,
+} from '@/src/types/modules/dev/notice';
 
 export default class NoticeRepository {
 	constructor(private readonly httpClient: HttpClient) {}
@@ -31,6 +37,13 @@ export default class NoticeRepository {
 		this.httpClient.post<INoticeCreate, INotice>({
 			url: NOTICE_MODULE,
 			meta: NOTICE_CREATE_META,
+			body,
+		});
+
+	public patchNotice = (body: IRequestBody<INoticeUpdate>) =>
+		this.httpClient.patch<INoticeUpdate, INotice>({
+			url: NOTICE_MODULE,
+			meta: NOTICE_UPDATE_META,
 			body,
 		});
 }
