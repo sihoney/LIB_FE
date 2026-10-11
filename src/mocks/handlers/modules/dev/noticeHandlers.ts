@@ -1,6 +1,6 @@
 import { notices } from '@/src/mocks/data/modules/dev/notices';
 import { ENV_API_BASE_URL } from '@/src/consts/common/envKeys';
-import { NOTICE_META, NOTICE_MODULE } from '@/src/consts/modules/dev/notice';
+import { NOTICE_DETAIL_META, NOTICE_META, NOTICE_MODULE } from '@/src/consts/modules/dev/notice';
 import type { IRequestBody, IResponseBody } from '@/src/types/common/repository';
 import type { INotice, INoticeSearch } from '@/src/types/modules/dev/notice';
 import { delay, http, HttpResponse } from 'msw';
@@ -11,6 +11,11 @@ import { delay, http, HttpResponse } from 'msw';
 const apiBase = new URL(`${ENV_API_BASE_URL.replace(/\/$/, '')}/`, window.location.origin);
 const endpoint = new URL(
 	`v2/${NOTICE_MODULE}/${NOTICE_META.signature}/${NOTICE_META.functionCode}/GetData`,
+	apiBase,
+).href;
+
+const detailEndpoint = new URL(
+	`v2/${NOTICE_MODULE}/${NOTICE_DETAIL_META.signature}/${NOTICE_DETAIL_META.functionCode}/GetData`,
 	apiBase,
 ).href;
 
@@ -35,6 +40,22 @@ export const noticeHandlers = [
 			// MES와 동일하게 take: 0은 skip 이후 전체 조회입니다.
 			data: take > 0 ? rows.slice(skip, skip + take) : rows.slice(skip),
 			totalRecords: rows.length,
+		});
+	}),
+
+	// notice 상세 조회
+	http.post(detailEndpoint, async ({ request }) => {
+		const body = (await request.json()) as IRequestBody<{ noticeId?: number }>;
+
+		await delay(350);
+
+		// 목록과 같은 데이터를 사용합니다. 없는 ID는 성공 응답의 null로 구분합니다.
+		// TODO: LIB_BE 상세 API 연결 시 미존재 응답 계약을 확정합니다.
+		return HttpResponse.json<IResponseBody<INotice | null>>({
+			success: true,
+			returnMess: '',
+			returnMessCode: 0,
+			data: notices.find(notice => notice.id === body.data?.noticeId) ?? null,
 		});
 	}),
 ];

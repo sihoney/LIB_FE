@@ -338,3 +338,14 @@ ButtonIcon·Icon은 MES 래퍼를 사용하며 icon 매핑에는 사이드바 �
 - 요청 타입·MSW 응답 분기·선택 링크·validateSearch에서 시나리오를 제거했다.
 - Component에서 검색 상태·Service·검색 폼·목록을 직접 연결한다.
 - 검색 결과가 없는 경우의 빈 목록과 실제 통신 실패 처리는 유지한다.
+
+## 19. 공지글 상세 조회
+
+- 목록 제목 링크에서 /dev/notices/$noticeId 경로로 이동한다. 상세 페이지에서 ID로 다시 조회하므로 직접 접속도 가능하다.
+- MES처럼 params.parse에서 숫자 ID를 검증하고 페이지 → Service(useQuery) → Repository → HttpClient로 조회한다.
+- Zod가 없는 현재 단계에서는 Number와 양의 안전 정수 검사로 대체하며 Zod 도입 후 교체할 TODO를 남긴다.
+- 상세 쿼리 키에는 상세 API 정보와 noticeId가 포함된 body를 넣는다. enabled는 ID 유무로 결정하고 목록의 keepPreviousData는 사용하지 않는다.
+- MSW는 기존 목록 데이터에서 ID가 일치하는 한 건을 반환한다. 임시 계약은 INotice | null이며 미존재 시 성공 응답의 null을 반환한다. 실제 서버 연결 시 계약을 확정한다.
+- 상세 UI는 페이지에서 직접 구현한다. 로딩·미존재·제목·본문을 표시하며 최초 통신 오류는 기존 LIB Router 오류 화면으로 전달한다.
+- MES의 대시보드 닫기 대신 목록 링크를 임시 연결한다. 목록 검색·페이징은 로컬 상태이므로 복귀 시 초기화된다.
+- 인증·권한 검사, 공통 상세 UI, 첨부파일·읽음 기록은 이번 범위에 포함하지 않는다.

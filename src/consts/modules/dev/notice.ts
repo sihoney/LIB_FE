@@ -4,3 +4,8 @@ export const NOTICE_META = {
 } as const;
 
 export const NOTICE_MODULE = 'Dev';
+
+export const NOTICE_DETAIL_META = {
+	signature: 'Notice',
+	functionCode: 'GetNoticeDetail',
+} as const;

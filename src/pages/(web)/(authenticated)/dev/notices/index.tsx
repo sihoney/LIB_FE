@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import Button from '@/src/components/ui/buttons/Button';
 import { Card, Pagination, TextField, Typography } from '@mui/material';
 import services from '@/src/services/services';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 
 const PAGE_SIZE = 10;
 
@@ -93,7 +93,13 @@ const Component = () => {
 				{query.data?.data.map(notice => (
 					<Card component='li' key={notice.id}>
 						<Typography component='h2' variant='h6' className='mb-2 text-primary'>
-							{notice.title}
+							<Link
+								to='/dev/notices/$noticeId'
+								params={{ noticeId: notice.id }}
+								className='hover:underline'
+							>
+								{notice.title}
+							</Link>
 						</Typography>
 						<p className='text-on-surface-secondary'>{notice.content}</p>
 					</Card>
