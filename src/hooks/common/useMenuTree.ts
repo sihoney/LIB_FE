@@ -15,7 +15,6 @@ const menus = [
 		shortName: '공지',
 		link: linkOptions({
 			to: '/dev/notices',
-			search: { scenario: 'success' },
 		}),
 	},
 ];

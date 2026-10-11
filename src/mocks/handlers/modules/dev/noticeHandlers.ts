@@ -20,30 +20,15 @@ export const noticeHandlers = [
 
 		// 첫 조회와 재조회 중 상태를 눈으로 확인하기 위한 테스트용 지연입니다.
 		await delay(350);
-
-		// [시나리오] 1. error
-		if (body.data?.scenario === 'error') {
-			return HttpResponse.json<IResponseBody<INotice[] | null>>({
-				success: false,
-				returnMess: '공지글 조회 실패를 재현했습니다.',
-				returnMessCode: 'NOTICE_ERROR',
-				data: null,
-			});
-		}
-
-		// [시나리오] 2. success, empty
 		// 제목 검색 → 검색 결과 전체 건수 → 페이지 자르기 순서입니다.
 		// TODO: 다른 조회에서 반복되면 MES BaseMockRepository의 검색·페이징 처리로 이동합니다.
 		const title = body.data?.title?.trim().toLocaleLowerCase() ?? '';
-		const rows =
-			body.data?.scenario === 'empty'
-				? []
-				: notices.filter(notice => notice.title.toLocaleLowerCase().includes(title));
+		const rows = notices.filter(notice => notice.title.toLocaleLowerCase().includes(title));
 
 		const skip = body.skip ?? 0;
 		const take = body.take ?? 20;
 
-		return HttpResponse.json<IResponseBody<INotice[] | null>>({
+		return HttpResponse.json<IResponseBody<INotice[]>>({
 			success: true,
 			returnMess: '',
 			returnMessCode: 0,

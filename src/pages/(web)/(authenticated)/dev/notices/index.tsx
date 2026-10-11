@@ -2,51 +2,42 @@ import { useState, type FormEvent } from 'react';
 import Button from '@/src/components/ui/buttons/Button';
 import { Card, Pagination, TextField, Typography } from '@mui/material';
 import services from '@/src/services/services';
-import type { TNoticeScenario } from '@/src/types/modules/dev/notice';
-import { createFileRoute, Link } from '@tanstack/react-router';
-
-const Component = () => {
-	const { scenario } = Route.useSearch(); // 'validateSearch'에서 정의한 검색 파라미터를 가져옵니다.
-
-	// 시나리오 전환 시 검색·페이지와 이전 응답을 초기화합니다.
-	return <NoticeList key={scenario} scenario={scenario} />;
-};
+import { createFileRoute } from '@tanstack/react-router';
 
 const PAGE_SIZE = 10;
 
-const NoticeList = ({ scenario }: { scenario: TNoticeScenario }) => {
-	// TODO: 반복되는 목록 화면이 생기면 MES useTableState·TableSearchToolbar로 이동합니다.
-	// 입력 중인 값과 실제 요청에 적용한 조건을 분리합니다.
+const Component = () => {
+	// 공통화 전에 입력값 → 적용 조건 → API 요청 흐름을 이 페이지에서 직접 학습합니다.
+	// TODO: 두 번째 목록에서 반복을 확인한 뒤 MES의 검색 툴바·useTableState로 옮깁니다.
 	const [draftTitle, setDraftTitle] = useState('');
-	const [search, setSearch] = useState({
-		title: '',
-		pageIndex: 0,
-	});
-
+	const [search, setSearch] = useState({ title: '', pageIndex: 0 });
 	const query = services.noticeService.useGetNoticeList({
-		data: {
-			scenario,
-			...(search.title ? { title: search.title } : {}),
-		},
+		data: search.title ? { title: search.title } : {},
 		skip: search.pageIndex * PAGE_SIZE,
 		take: PAGE_SIZE,
 	});
-
 	const totalRecords = query.data?.totalRecords ?? 0;
 	const pageCount = Math.max(1, Math.ceil(totalRecords / PAGE_SIZE));
 
 	const handleSearch = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
-
 		if (query.isFetching) return;
-
 		const title = draftTitle.trim();
-		// MES submit의 keyUnchanged와 같은 역할:
-		// 		같은 조건·첫 페이지 -> 재조회
+		// 같은 조건·첫 페이지이면 queryKey가 바뀌지 않으므로 직접 재조회합니다.
 		if (search.title === title && search.pageIndex === 0) {
-			void query.refetch(); // 현재 조건으로 다시 조회 (새 응답으로 캐시를 갱신)
+			void query.refetch();
 		} else {
 			setSearch({ title, pageIndex: 0 });
+		}
+	};
+	const handleReset = () => {
+		if (query.isFetching) return;
+		setDraftTitle('');
+		// 입력값과 조회 조건을 함께 초기화합니다. 이미 초기 조건이면 다시 요청합니다.
+		if (search.title === '' && search.pageIndex === 0) {
+			void query.refetch();
+		} else {
+			setSearch({ title: '', pageIndex: 0 });
 		}
 	};
 
@@ -59,29 +50,17 @@ const NoticeList = ({ scenario }: { scenario: TNoticeScenario }) => {
 			<Typography component='h1' variant='h4' className='mb-4 font-bold'>
 				테스트용 공지글
 			</Typography>
-			<p className='mb-6 text-on-surface-secondary'>
-				응답 유형을 선택해 목록·로딩·오류 처리를 확인할 수 있습니다.
-			</p>
 
-			<nav className='actions' aria-label='테스트 응답 선택'>
-				<Link to='/dev/notices' search={{ scenario: 'success' }}>
-					정상 응답
-				</Link>
-				<Link to='/dev/notices' search={{ scenario: 'empty' }}>
-					빈 목록
-				</Link>
-				<Link to='/dev/notices' search={{ scenario: 'error' }}>
-					오류 응답
-				</Link>
-			</nav>
-
-			<form onSubmit={handleSearch} className='my-4 flex flex-wrap items-center gap-3'>
+			<form onSubmit={handleSearch} className='my-4 flex flex-wrap items-start gap-3'>
 				<TextField
 					label='제목 검색'
 					size='small'
 					value={draftTitle}
 					onChange={event => setDraftTitle(event.target.value)}
 				/>
+				<Button type='button' disabled={query.isFetching} onClick={handleReset}>
+					초기화
+				</Button>
 				<Button type='submit' disabled={query.isFetching}>
 					검색
 				</Button>
@@ -91,6 +70,7 @@ const NoticeList = ({ scenario }: { scenario: TNoticeScenario }) => {
 				재조회
 			</Button>
 
+			{/* 로딩 상태 */}
 			{query.isFetching && (
 				<p role='status'>
 					{query.isPlaceholderData
@@ -98,11 +78,15 @@ const NoticeList = ({ scenario }: { scenario: TNoticeScenario }) => {
 						: '공지글을 불러오고 있습니다.'}
 				</p>
 			)}
+
 			<p className='mt-3'>
 				{query.isPlaceholderData ? '이전 결과' : '검색 결과'}: {totalRecords}건
 			</p>
 
+			{/* 조회 실패 */}
 			{query.isError && <p role='alert'>재조회에 실패했습니다. 기존 목록을 표시합니다.</p>}
+
+			{/* 빈 배열 */}
 			{query.data?.data.length === 0 && <p>등록된 공지글이 없습니다.</p>}
 
 			<ul className='notice-list mt-6 grid list-none gap-4 p-0'>
@@ -144,11 +128,5 @@ export const Route = createFileRoute('/(web)/(authenticated)/dev/notices/')({
 	staticData: {
 		title: '테스트용 공지글',
 	}, // staticData.title: 자신의 탭 제목을 지정
-	validateSearch: (search: Record<string, unknown>): { scenario: TNoticeScenario } => ({
-		scenario:
-			search.scenario === 'empty' || search.scenario === 'error'
-				? search.scenario
-				: 'success',
-	}), // validateSearch: URL의 검색 파라미터를 확인&정리하는 함수
 	component: Component,
 });

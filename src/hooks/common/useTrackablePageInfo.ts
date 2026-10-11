@@ -75,7 +75,7 @@ export const useTrackablePageInfo = (): ITrackablePageInfo | null => {
 // {
 // 		path: '/dev/notices',
 // 		title: '테스트용 공지글',
-// 		queryString: 'scenario=empty',
+// 		queryString: '',
 // 		routeTemplate: '/dev/notices',
 // 		discardOnLeave: undefined,
 // }

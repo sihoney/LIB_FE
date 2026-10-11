@@ -197,9 +197,9 @@ Query 영속 캐시·버전 폴링, KeepAlive, 그리드 개인화, MQTT, PDF·�
 ### 실행과 확인
 
 - `pnpm dev` 실행 후 `/`에서 시작 화면, `/dev/notices`에서 공지글 목록을 확인한다.
-- 개발 기본 환경은 MSW가 활성화된다. `scenario=success|empty|error` 검색 파라미터로 정상 3건·빈 목록·업무 실패를 선택한다. 잘못된 값은 정상으로 해석한다.
+- 개발 기본 환경은 MSW가 활성화된다. 공지글은 제목 검색과 서버 페이징으로 조회하며 응답 시나리오 제어는 제거했다.
 - 재조회 버튼은 현재 Query를 다시 요청한다. 첫 조회 실패는 라우트 오류 화면으로 전달하며, 재조회 실패는 기존 목록을 유지하고 안내한다.
-- 오류 화면의 다시 시도는 MES처럼 Query 상태와 라우트 오류 상태를 초기화한다. `scenario=error`는 의도적인 지속 실패이므로 다시 시도해도 실패한다. 시작 화면으로 돌아가 정상 응답을 선택하면 된다.
+- 오류 화면의 다시 시도는 MES처럼 Query 상태와 라우트 오류 상태를 초기화한다. 실제 통신 실패 처리 UI는 유지한다.
 - MSW 비활성화 시에는 실제 API 주소로 요청한다. LIB_BE가 아직 없다면 조회 실패가 정상이다.
 - 기본 production 빌드는 MSW가 비활성화되어 가짜 성공 응답을 제공하지 않는다. 현재 학습용 공지글 경로 자체는 production에서도 존재한다. 실서비스 배포 전 테스트 모듈을 제거한다.
 
@@ -208,7 +208,7 @@ Query 영속 캐시·버전 폴링, KeepAlive, 그리드 개인화, MQTT, PDF·�
 `공지글 페이지 → NoticeService → NoticeRepository → HttpClient → MSW 핸들러`로 연결한다. `services/services.ts`에서 인스턴스를 한 번 조립한다.
 
 - API: `POST /v2/Dev/Notice/GetNoticeList/GetData`.
-- 요청: `{ data: { scenario }, skip: 0, take: 20 }`.
+- 요청: `{ data: { title?: string }, skip: 0, take: 10 }`.
 - 응답: `{ success, returnMess, returnMessCode, data, totalRecords }`. 성공 시 data는 공지 배열이며 각 항목은 id·title·content를 가진다.
 - Query key에 모듈·signature·functionCode·요청 본문을 포함하여 서로 다른 조건의 캐시를 분리한다. 취소 신호는 Repository를 거쳐 Axios로 전달한다.
 - QueryClient는 메모리에 하나만 생성한다. staleTime 30초, gcTime 5분이며, MES처럼 자동 재시도·포커스/재접속/마운트 시 자동 재조회를 끈다. 따라서 시간이 지나 stale이 되어도 단순 재방문만으로 갱신되지 않으며, 재조회 버튼으로 갱신한다. 캐시는 페이지 새로고침 시 사라진다.
@@ -293,7 +293,7 @@ MES의 공통 테마 옵션 → 웹 테마 → ThemeProvider 구성을 따른다
 
 2026-10-10: `useMenuTree`에서 기존 시작 화면·공지글 경로를 타입이 보장되는 정적 메뉴 데이터로 제공한다. 서버 메뉴·권한 API는 아직 도입하지 않았다.
 
-`BoxMenuExpanded`와 `BoxMenuCollapsed`는 같은 메뉴 데이터를 표시하며 현재 경로의 활성 상태와 공지글의 `scenario=success` 검색 조건을 유지한다. route.tsx·SidebarMenu·ButtonToggleSidebar는 sidebarStore의 open을 각각 구독한다. 바깥 Container의 폭은 220px/80px로 전환하고, 안쪽은 목표 폭을 유지하며 overflow-hidden으로 가린다. hover 동작은 구현했으며 서버 메뉴 트리·즐겨찾기는 후속 작업이다.
+`BoxMenuExpanded`와 `BoxMenuCollapsed`는 같은 메뉴 데이터를 표시하며 현재 경로의 활성 상태를 표시하고 공지글 경로로 이동한다. route.tsx·SidebarMenu·ButtonToggleSidebar는 sidebarStore의 open을 각각 구독한다. 바깥 Container의 폭은 220px/80px로 전환하고, 안쪽은 목표 폭을 유지하며 overflow-hidden으로 가린다. hover 동작은 구현했으며 서버 메뉴 트리·즐겨찾기는 후속 작업이다.
 
 ### 사이드바 Store와 버튼 분리
 
@@ -320,8 +320,21 @@ ButtonIcon·Icon은 MES 래퍼를 사용하며 icon 매핑에는 사이드바 �
 
 - 공통화 전에 Notice에 제목 검색과 10개 단위 서버 페이징을 구현한다.
 - 입력 중인 제목과 적용한 제목을 분리한다. 제출 시 첫 페이지로 이동하고, 같은 조건·첫 페이지이면 refetch한다.
-- 검색·페이지는 화면 로컬 상태이며 URL에는 기존 테스트 scenario만 유지한다. 시나리오 변경 시 목록 컴포넌트를 초기화한다.
+- 검색·페이지는 공지 페이지의 로컬 상태로 관리한다. URL 시나리오와 시나리오별 컴포넌트 초기화는 제거했다.
 - Service는 MES 공지 목록처럼 keepPreviousData를 사용한다. 이전 결과 표시 중이라는 안내와 페이지 이동 잠금을 연결한다.
 - Mock 데이터는 독립 Faker 인스턴스의 고정 seed로 모듈 초기화 시 생성한다. 기존 공지 3개와 생성 데이터 50개를 사용하며 서버 영속 저장은 아니다.
 - MSW는 제목 부분 일치 검색 후 totalRecords를 계산하고 skip/take를 적용한다. take: 0은 skip 이후 전체 조회다.
 - Repository·HttpClient는 기존 전달 구조를 유지한다. useTableState·TableSearchToolbar·MockRepository 공통화는 후속 TODO다.
+
+## 17. 공통 검색 구현의 학습용 보존
+
+- 공통 검색 폼·테이블 상태 구현과 학습 주석은 learning/notice-common-search-snapshot 브랜치(4297df0)에 보존했다.
+- 현재는 공지 페이지 안에서 입력값·적용 조건·페이지·검색 및 초기화 처리를 직접 관리한다.
+- 공통화에서 추가한 Form·TextField 계층·검색 툴바·테이블 상태 훅·검색 스키마 및 전용 의존성은 제거했다.
+- 다른 목록을 직접 구현한 뒤 반복되는 부분을 확인하며 MES 구조로 공통화한다.
+
+## 18. 공지글 테스트 시나리오 제거
+
+- 요청 타입·MSW 응답 분기·선택 링크·validateSearch에서 시나리오를 제거했다.
+- Component에서 검색 상태·Service·검색 폼·목록을 직접 연결한다.
+- 검색 결과가 없는 경우의 빈 목록과 실제 통신 실패 처리는 유지한다.
