@@ -28,4 +28,18 @@ export default class HttpClient {
 		}
 		return response.data;
 	};
+
+	// MES 등록 API는 POST /v2/{module}/{signature}/Create/Update로 요청합니다.
+	// TODO: 첨부 기능 도입 시 MES의 FormData 변환과 공통 응답 인터셉터를 연결합니다.
+	public post = async <T, U>({ url, meta, body, signal }: IRequestConfig<T>) => {
+		const response = await this.axios.post<IResponseBody<U>>(
+			`v2/${url}/${meta.signature}/${meta.functionCode}/Update`,
+			body,
+			{ signal },
+		);
+		if (!response.data.success) {
+			throw new Error(response.data.returnMess || '요청을 처리하지 못했습니다.');
+		}
+		return response.data;
+	};
 }

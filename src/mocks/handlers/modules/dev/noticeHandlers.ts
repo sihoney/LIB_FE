@@ -1,8 +1,13 @@
 import { notices } from '@/src/mocks/data/modules/dev/notices';
 import { ENV_API_BASE_URL } from '@/src/consts/common/envKeys';
-import { NOTICE_DETAIL_META, NOTICE_META, NOTICE_MODULE } from '@/src/consts/modules/dev/notice';
+import {
+	NOTICE_CREATE_META,
+	NOTICE_DETAIL_META,
+	NOTICE_META,
+	NOTICE_MODULE,
+} from '@/src/consts/modules/dev/notice';
 import type { IRequestBody, IResponseBody } from '@/src/types/common/repository';
-import type { INotice, INoticeSearch } from '@/src/types/modules/dev/notice';
+import type { INotice, INoticeCreate, INoticeSearch } from '@/src/types/modules/dev/notice';
 import { delay, http, HttpResponse } from 'msw';
 
 // new URL(상대 주소, 기준주소);
@@ -16,6 +21,11 @@ const endpoint = new URL(
 
 const detailEndpoint = new URL(
 	`v2/${NOTICE_MODULE}/${NOTICE_DETAIL_META.signature}/${NOTICE_DETAIL_META.functionCode}/GetData`,
+	apiBase,
+).href;
+
+const createEndpoint = new URL(
+	`v2/${NOTICE_MODULE}/${NOTICE_CREATE_META.signature}/${NOTICE_CREATE_META.functionCode}/Update`,
 	apiBase,
 ).href;
 
@@ -56,6 +66,42 @@ export const noticeHandlers = [
 			returnMess: '',
 			returnMessCode: 0,
 			data: notices.find(notice => notice.id === body.data?.noticeId) ?? null,
+		});
+	}),
+
+	// notice 단건 등록
+	// 화면 검증과 별개로 'API 경계에서도 입력값을 검사'
+	http.post(createEndpoint, async ({ request }) => {
+		const body = (await request.json()) as IRequestBody<INoticeCreate>;
+		const title = typeof body?.data?.title === 'string' ? body.data.title.trim() : '';
+		const content = typeof body?.data?.content === 'string' ? body.data.content.trim() : '';
+
+		await delay(350);
+
+		if (!title || title.length > 200 || !content) {
+			return HttpResponse.json<IResponseBody<INotice | null>>({
+				success: false,
+				returnMess: '제목은 1~200자, 본문은 필수입니다.',
+				returnMessCode: 'INVALID_NOTICE',
+				data: null,
+			});
+		}
+
+		// 지연 이후 현재 최댓값으로 ID를 생성합니다.
+		// 새로고침하면 초기 데이터로 돌아갑니다.
+		const notice: INotice = {
+			id: Math.max(0, ...notices.map(item => item.id)) + 1,
+			title,
+			content,
+		};
+
+		notices.unshift(notice);
+
+		return HttpResponse.json<IResponseBody<INotice | null>>({
+			success: true,
+			returnMess: '',
+			returnMessCode: 0,
+			data: notice,
 		});
 	}),
 ];

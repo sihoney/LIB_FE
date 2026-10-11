@@ -1,3 +1,4 @@
+import ModalCreateNotice from '@/src/pages/(web)/(authenticated)/dev/notices/-components/modals/ModalCreateNotice';
 import { useState, type FormEvent } from 'react';
 import Button from '@/src/components/ui/buttons/Button';
 import { Card, Pagination, TextField, Typography } from '@mui/material';
@@ -7,6 +8,9 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 const PAGE_SIZE = 10;
 
 const Component = () => {
+	// TODO: 반복되는 모달 상태를 확인한 뒤 MES의 useModalState로 옮깁니다.
+	const [createNotice, setCreateNotice] = useState(false);
+
 	// 공통화 전에 입력값 → 적용 조건 → API 요청 흐름을 이 페이지에서 직접 학습합니다.
 	// TODO: 두 번째 목록에서 반복을 확인한 뒤 MES의 검색 툴바·useTableState로 옮깁니다.
 	const [draftTitle, setDraftTitle] = useState('');
@@ -69,6 +73,13 @@ const Component = () => {
 			<Button type='button' disabled={query.isFetching} onClick={() => void query.refetch()}>
 				재조회
 			</Button>
+
+			<Button type='button' className='ml-2' onClick={() => setCreateNotice(true)}>
+				등록
+			</Button>
+			{createNotice && (
+				<ModalCreateNotice open={createNotice} onClose={() => setCreateNotice(false)} />
+			)}
 
 			{/* 로딩 상태 */}
 			{query.isFetching && (

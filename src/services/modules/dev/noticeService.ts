@@ -1,8 +1,14 @@
-import { NOTICE_DETAIL_META, NOTICE_META, NOTICE_MODULE } from '@/src/consts/modules/dev/notice';
+import { queryClient } from '@/src/contexts/QueryProvider';
+import {
+	NOTICE_CREATE_META,
+	NOTICE_DETAIL_META,
+	NOTICE_META,
+	NOTICE_MODULE,
+} from '@/src/consts/modules/dev/notice';
 import type NoticeRepository from '@/src/repositories/modules/dev/noticeRepository';
 import type { IRequestBody } from '@/src/types/common/repository';
-import type { INoticeSearch } from '@/src/types/modules/dev/notice';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import type { INoticeCreate, INoticeSearch } from '@/src/types/modules/dev/notice';
+import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
 
 export default class NoticeService {
 	constructor(private readonly noticeRepository: NoticeRepository) {}
@@ -25,5 +31,21 @@ export default class NoticeService {
 			],
 			queryFn: ({ signal }) => this.noticeRepository.getNoticeDetail(body, signal),
 			enabled: !!body.data?.noticeId,
+		});
+
+	public usePostNotice = () =>
+		useMutation({
+			mutationKey: [
+				NOTICE_MODULE,
+				NOTICE_CREATE_META.signature,
+				NOTICE_CREATE_META.functionCode,
+			],
+			mutationFn: (body: IRequestBody<INoticeCreate>) =>
+				this.noticeRepository.postNotice(body),
+			// MES처럼 목록 API 키까지만 지정하여 검색 조건·페이지별 목록을 함께 무효화합니다.
+			onSuccess: () =>
+				queryClient.invalidateQueries({
+					queryKey: [NOTICE_MODULE, NOTICE_META.signature, NOTICE_META.functionCode],
+				}),
 		});
 }
