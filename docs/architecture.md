@@ -269,7 +269,7 @@ MES의 공통 테마 옵션 → 웹 테마 → ThemeProvider 구성을 따른다
 ### 후속 작업
 
 - TODO: 인증 기반 구현 후 MES의 guardAuth('WEB')를 beforeLoad에 연결한다. 현재 접근 제한은 없으며, 폴더 이름이 인증을 수행하지 않는다.
-- Header·SidebarMenu 배치는 구현했다. 접기·펼치기와 너비 애니메이션은 구현했다. 서버 메뉴·방문 탭·hover는 후속 TODO다.
+- Header·SidebarMenu 배치는 구현했다. 접기·펼치기와 너비 애니메이션은 구현했다. 방문 탭·hover도 구현했으며 서버 메뉴 연결은 후속 TODO다.
 - 메뉴 캐시·모듈 루트 이동·KeepAlive 등 다른 의존 기능은 각 기반을 구현하는 단계에서 연결한다. 빈 인증 함수나 가짜 캐시 loader는 추가하지 않았다.
 
 검증 기준: 기존 URL의 직접 접속·새로고침·이동, 정상/빈 목록/오류 응답, 루트의 없는 경로와 복귀, 테마 저장·복원.
@@ -283,26 +283,35 @@ MES의 공통 테마 옵션 → 웹 테마 → ThemeProvider 구성을 따른다
 - 사이드바는 220px/80px 너비를 0.2초 동안 전환하며 sticky top-0, h-dvh를 사용한다. 오른쪽 헤더도 sticky top-0다.
 - index.css의 h-header-web, p-layout-web은 MES와 같은 spacing 기반 값이다.
 - 페이지 본문은 window에서 스크롤하고, 사이드바 메뉴 영역만 독립적으로 스크롤한다.
-- Header는 MES의 컨테이너만 만들었으며 현재 내용은 비어 있다. 임시 화면 제목을 추가하지 않았다.
+- Header에는 MES의 TabsStrip·TabStrip을 연결했다.
 - SidebarMenu에는 기존 두 링크만 옮겼다. 새 메뉴 기능이 아니며 서버 메뉴 연결 전 임시 데이터다.
 - 테마 스위치 파일의 사용자 변경은 보존했다. 기존 스위치의 표시 위치만 임시 시작 화면으로 옮겼으며 헤더에는 추가하지 않았다.
 
-후속 TODO: TabsStrip·TabStrip, 서버 메뉴·권한과 useMenuTree 연결, BoxLogo·계정 데이터 연결, 사이드바 hover 및 MES 토글 버튼 스타일 연결, KeepAliveOutlet, 테마 전환의 MES 공통 설정 UI 연결. 인증과 / → /dashboard 전환 TODO는 유지한다. 자동 모바일 접기와 임의의 Store 영속 저장은 추가하지 않았다.
+후속 TODO: 서버 메뉴·권한과 useMenuTree 연결, BoxLogo·계정 데이터 연결, KeepAliveOutlet, 테마 전환의 MES 공통 설정 UI 연결. 인증과 / → /dashboard 전환 TODO는 유지한다. 자동 모바일 접기와 임의의 Store 영속 저장은 추가하지 않았다.
 
 ### 사이드바 메뉴 구현
 
 2026-10-10: `useMenuTree`에서 기존 시작 화면·공지글 경로를 타입이 보장되는 정적 메뉴 데이터로 제공한다. 서버 메뉴·권한 API는 아직 도입하지 않았다.
 
-`BoxMenuExpanded`와 `BoxMenuCollapsed`는 같은 메뉴 데이터를 표시하며 현재 경로의 활성 상태와 공지글의 `scenario=success` 검색 조건을 유지한다. route.tsx·SidebarMenu·ButtonToggleSidebar는 sidebarStore의 open을 각각 구독한다. 바깥 Container의 폭은 220px/80px로 전환하고, 안쪽은 목표 폭을 유지하며 overflow-hidden으로 가린다. hover 동작·서버 메뉴 트리·즐겨찾기는 후속 작업이다.
+`BoxMenuExpanded`와 `BoxMenuCollapsed`는 같은 메뉴 데이터를 표시하며 현재 경로의 활성 상태와 공지글의 `scenario=success` 검색 조건을 유지한다. route.tsx·SidebarMenu·ButtonToggleSidebar는 sidebarStore의 open을 각각 구독한다. 바깥 Container의 폭은 220px/80px로 전환하고, 안쪽은 목표 폭을 유지하며 overflow-hidden으로 가린다. hover 동작은 구현했으며 서버 메뉴 트리·즐겨찾기는 후속 작업이다.
 
 ### 사이드바 Store와 버튼 분리
 
 MES와 같은 stores/common/sidebarStore.ts, sidebars/buttons/ButtonToggleSidebar.tsx로 책임을 분리했다. open·setOpen·toggle을 Store에서 제공하고 props 전달을 제거했다. Store는 메모리 상태이므로 라우트 이동 중에는 유지되고 새로고침하면 기본 펼침 상태가 된다.
 
-이번 범위는 상태 공유와 버튼 분리다. 기존 버튼의 위치·문구·항상 표시되는 동작 및 220px/80px 너비 애니메이션은 유지한다. MES의 hovered·setHovered·해제 지연, ButtonIcon·Icon과 외부 버튼 배치는 후속 TODO로 남긴다. persist·메뉴 API·Faker·방문 탭은 추가하지 않았다.
+이 절은 최초 Store·버튼 분리 시점의 기록이다. 아래 후속 작업에서 hover와 버튼 스타일을 완료했다. 당시 범위는 상태 공유와 버튼 분리였다. 기존 버튼의 위치·문구·항상 표시되는 동작 및 220px/80px 너비 애니메이션은 유지한다. MES의 hovered·setHovered·해제 지연, ButtonIcon·Icon과 외부 버튼 배치는 후속 TODO로 남긴다. persist·메뉴 API·Faker·방문 탭은 추가하지 않았다.
 
 ### 사이드바 hover와 경계 버튼
 
 MES의 hovered·setHovered와 es-toolkit debounce(500ms)를 적용했다. 사이드바 진입 시 즉시 표시하며 이탈 후 500ms가 지나면 숨긴다. 재진입은 예약된 숨김을 취소한다. 버튼은 overflow-hidden 컨테이너의 형제에 배치하고 MES의 방향 아이콘·위치·스타일을 적용한다.
 
-ButtonIcon·Icon은 MES 래퍼를 사용하며 icon 매핑에는 현재 필요한 두 아이콘만 포함한다. 다국어 기반은 없어 한국어 문구를 직접 사용하고 TODO를 남겼다. 키보드 포커스 시에도 버튼이 보이도록 focus-visible 표시를 보완했다. 220px/80px 전환과 기존 로고 변경은 유지한다. 앞 절의 hover·버튼 스타일 TODO는 이 작업으로 완료했다.
+ButtonIcon·Icon은 MES 래퍼를 사용하며 icon 매핑에는 사이드바 방향 아이콘과 방문 탭 메뉴에서 사용하는 아이콘을 포함한다. 다국어 기반은 없어 한국어 문구를 직접 사용하고 TODO를 남겼다. 키보드 포커스 시에도 버튼이 보이도록 focus-visible 표시를 보완했다. 220px/80px 전환과 기존 로고 변경은 유지한다. 앞 절의 hover·버튼 스타일 TODO는 이 작업으로 완료했다.
+
+## 15. 방문 탭
+
+- MES의 Header → TabsStrip → TabStrip 및 MUI 래퍼 구조를 사용한다.
+- useTrackablePageInfo는 라우트 staticData.title, 경로, 검색 문자열을 추출한다. 현재 공지글만 추적하며 홈은 제외한다.
+- pageHistoryStore는 MES처럼 최대 10개 이력, 경로 템플릿별 중복 방지, 최근 방문 시각, 닫기 및 순서 변경을 관리한다. sessionStorage에 저장하며 앱 유형 분기와 기존 MES 저장 데이터 마이그레이션은 가져오지 않는다.
+- TabsStrip은 탭 이동, 우클릭 닫기(현재/다른/오른쪽/모든 탭), dnd-kit 포인터 드래그 정렬을 담당한다.
+- 임시 연결: 인증 영역 route의 effect에서 이력을 기록한다. KeepAliveOutlet 도입 후 이 effect를 이동한다. 본문은 일반 Outlet이므로 입력값 등 컴포넌트 상태를 보존하지 않는다. 검색 문자열과 Query 캐시는 별도다.
+- TODO: 대시보드 도입 시 마지막 탭 닫기 목적지 /를 MES의 /dashboard로 교체한다. 다국어 기반 도입 시 제목과 메뉴 번역을 연결한다.

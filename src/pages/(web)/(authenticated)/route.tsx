@@ -1,3 +1,6 @@
+import { useEffect, useRef } from 'react';
+import { useTrackablePageInfo } from '@/src/hooks/common/useTrackablePageInfo';
+import usePageHistoryStore, { toGroupKey } from '@/src/stores/common/pageHistoryStore';
 import Container from '@/src/components/ui/containers/Container';
 import Header from '@/src/pages/(web)/(authenticated)/-components/headers/Header';
 import SidebarMenu from '@/src/pages/(web)/(authenticated)/-components/sidebars/SidebarMenu';
@@ -19,6 +22,30 @@ const Component = () => {
 	// route·메뉴·토글 버튼이 같은 Store의 open을 구독합니다.
 	const open = useSidebarStore(state => state.open);
 	const setHovered = useSidebarStore(state => state.setHovered);
+
+	const trackablePageInfo = useTrackablePageInfo();
+	const upsertItem = usePageHistoryStore(s => s.upsertItem);
+	const removeItem = usePageHistoryStore(s => s.removeItem);
+	const previousPage = useRef(trackablePageInfo);
+	// TODO: KeepAliveOutlet 도입 시 두 이력 기록 effect를 그쪽으로 이동합니다.
+	// 현재는 방문 정보만 유지하며 Outlet의 컴포넌트 상태는 보존하지 않습니다.
+
+	useEffect(() => {
+		// 현재 페이지 정보를 기록 (추후 KeepAliveOutlet으로 옮길 임시 연결)
+		if (trackablePageInfo) upsertItem(trackablePageInfo);
+	}, [trackablePageInfo, upsertItem]);
+
+	useEffect(() => {
+		const previous = previousPage.current;
+		const currentGroupKey = trackablePageInfo
+			? toGroupKey(trackablePageInfo.path, trackablePageInfo.routeTemplate)
+			: '';
+		if (previous?.discardOnLeave) {
+			const groupKey = toGroupKey(previous.path, previous.routeTemplate);
+			if (groupKey !== currentGroupKey) removeItem({ groupKey, currentGroupKey });
+		}
+		previousPage.current = trackablePageInfo;
+	}, [trackablePageInfo, removeItem]);
 
 	return (
 		<Container

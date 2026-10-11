@@ -49,6 +49,7 @@
 	--color-on-surface: var(--mui-palette-text-primary);
 	--color-on-surface-secondary: var(--mui-palette-text-secondary);
 	--color-disabled: var(--mui-palette-text-disabled);
+	--color-on-surface-disabled: var(--mui-palette-text-disabled);
 	--color-divider: var(--mui-palette-divider);
 }
 

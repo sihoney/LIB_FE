@@ -1,4 +1,5 @@
 import Container from '@/src/components/ui/containers/Container';
+import TabsStrip from '@/src/pages/(web)/(authenticated)/-components/headers/TabsStrip';
 import { cn } from '@/src/utils/common/cn';
 
 const Header = () => (
@@ -9,7 +10,7 @@ const Header = () => (
 			'bg-surface border-divider border-b backdrop-blur-sm',
 		)}
 	>
-		{/* TODO: 방문 이력 기반 구현 후 MES의 TabsStrip·TabStrip을 연결합니다. */}
+		<TabsStrip />
 	</Container>
 );
 
