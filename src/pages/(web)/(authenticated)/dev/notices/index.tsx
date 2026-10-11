@@ -1,5 +1,6 @@
+import { useState, type FormEvent } from 'react';
 import Button from '@/src/components/ui/buttons/Button';
-import { Card, Typography } from '@mui/material';
+import { Card, Pagination, TextField, Typography } from '@mui/material';
 import services from '@/src/services/services';
 import type { TNoticeScenario } from '@/src/types/modules/dev/notice';
 import { createFileRoute, Link } from '@tanstack/react-router';
@@ -7,7 +8,47 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 const Component = () => {
 	const { scenario } = Route.useSearch(); // 'validateSearch'에서 정의한 검색 파라미터를 가져옵니다.
 
-	const query = services.noticeService.useGetNoticeList({ data: { scenario } });
+	// 시나리오 전환 시 검색·페이지와 이전 응답을 초기화합니다.
+	return <NoticeList key={scenario} scenario={scenario} />;
+};
+
+const PAGE_SIZE = 10;
+
+const NoticeList = ({ scenario }: { scenario: TNoticeScenario }) => {
+	// TODO: 반복되는 목록 화면이 생기면 MES useTableState·TableSearchToolbar로 이동합니다.
+	// 입력 중인 값과 실제 요청에 적용한 조건을 분리합니다.
+	const [draftTitle, setDraftTitle] = useState('');
+	const [search, setSearch] = useState({
+		title: '',
+		pageIndex: 0,
+	});
+
+	const query = services.noticeService.useGetNoticeList({
+		data: {
+			scenario,
+			...(search.title ? { title: search.title } : {}),
+		},
+		skip: search.pageIndex * PAGE_SIZE,
+		take: PAGE_SIZE,
+	});
+
+	const totalRecords = query.data?.totalRecords ?? 0;
+	const pageCount = Math.max(1, Math.ceil(totalRecords / PAGE_SIZE));
+
+	const handleSearch = (event: FormEvent<HTMLFormElement>) => {
+		event.preventDefault();
+
+		if (query.isFetching) return;
+
+		const title = draftTitle.trim();
+		// MES submit의 keyUnchanged와 같은 역할:
+		// 		같은 조건·첫 페이지 -> 재조회
+		if (search.title === title && search.pageIndex === 0) {
+			void query.refetch(); // 현재 조건으로 다시 조회 (새 응답으로 캐시를 갱신)
+		} else {
+			setSearch({ title, pageIndex: 0 });
+		}
+	};
 
 	// 첫 조회 실패는 Router가 처리
 	// 재조회 실패 시, 기존 목록을 보존
@@ -34,11 +75,33 @@ const Component = () => {
 				</Link>
 			</nav>
 
+			<form onSubmit={handleSearch} className='my-4 flex flex-wrap items-center gap-3'>
+				<TextField
+					label='제목 검색'
+					size='small'
+					value={draftTitle}
+					onChange={event => setDraftTitle(event.target.value)}
+				/>
+				<Button type='submit' disabled={query.isFetching}>
+					검색
+				</Button>
+			</form>
+
 			<Button type='button' disabled={query.isFetching} onClick={() => void query.refetch()}>
 				재조회
 			</Button>
 
-			{query.isFetching && <p role='status'>공지글을 불러오고 있습니다.</p>}
+			{query.isFetching && (
+				<p role='status'>
+					{query.isPlaceholderData
+						? '새 결과를 불러오는 중입니다. 이전 조회 결과를 표시합니다.'
+						: '공지글을 불러오고 있습니다.'}
+				</p>
+			)}
+			<p className='mt-3'>
+				{query.isPlaceholderData ? '이전 결과' : '검색 결과'}: {totalRecords}건
+			</p>
+
 			{query.isError && <p role='alert'>재조회에 실패했습니다. 기존 목록을 표시합니다.</p>}
 			{query.data?.data.length === 0 && <p>등록된 공지글이 없습니다.</p>}
 
@@ -52,18 +115,40 @@ const Component = () => {
 					</Card>
 				))}
 			</ul>
+
+			<Pagination
+				className='mt-4'
+				count={pageCount}
+				page={search.pageIndex + 1}
+				disabled={query.isFetching || totalRecords === 0}
+				onChange={(_, page) =>
+					setSearch(previous => ({ ...previous, pageIndex: page - 1 }))
+				}
+				getItemAriaLabel={(type, page) =>
+					type === 'page'
+						? String(page) + '페이지'
+						: type === 'next'
+							? '다음 페이지'
+							: type === 'previous'
+								? '이전 페이지'
+								: type === 'first'
+									? '첫 페이지'
+									: '마지막 페이지'
+				}
+			/>
 		</section>
 	);
 };
 
 export const Route = createFileRoute('/(web)/(authenticated)/dev/notices/')({
-	staticData: { title: '테스트용 공지글' },
-	// validateSearch: URL의 검색 파라미터를 확인&정리하는 함수
+	staticData: {
+		title: '테스트용 공지글',
+	}, // staticData.title: 자신의 탭 제목을 지정
 	validateSearch: (search: Record<string, unknown>): { scenario: TNoticeScenario } => ({
 		scenario:
 			search.scenario === 'empty' || search.scenario === 'error'
 				? search.scenario
 				: 'success',
-	}),
+	}), // validateSearch: URL의 검색 파라미터를 확인&정리하는 함수
 	component: Component,
 });

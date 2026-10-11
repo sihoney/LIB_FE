@@ -315,3 +315,13 @@ ButtonIcon·Icon은 MES 래퍼를 사용하며 icon 매핑에는 사이드바 �
 - TabsStrip은 탭 이동, 우클릭 닫기(현재/다른/오른쪽/모든 탭), dnd-kit 포인터 드래그 정렬을 담당한다.
 - 임시 연결: 인증 영역 route의 effect에서 이력을 기록한다. KeepAliveOutlet 도입 후 이 effect를 이동한다. 본문은 일반 Outlet이므로 입력값 등 컴포넌트 상태를 보존하지 않는다. 검색 문자열과 Query 캐시는 별도다.
 - TODO: 대시보드 도입 시 마지막 탭 닫기 목적지 /를 MES의 /dashboard로 교체한다. 다국어 기반 도입 시 제목과 메뉴 번역을 연결한다.
+
+## 16. 학습용 공지글 검색·페이징
+
+- 공통화 전에 Notice에 제목 검색과 10개 단위 서버 페이징을 구현한다.
+- 입력 중인 제목과 적용한 제목을 분리한다. 제출 시 첫 페이지로 이동하고, 같은 조건·첫 페이지이면 refetch한다.
+- 검색·페이지는 화면 로컬 상태이며 URL에는 기존 테스트 scenario만 유지한다. 시나리오 변경 시 목록 컴포넌트를 초기화한다.
+- Service는 MES 공지 목록처럼 keepPreviousData를 사용한다. 이전 결과 표시 중이라는 안내와 페이지 이동 잠금을 연결한다.
+- Mock 데이터는 독립 Faker 인스턴스의 고정 seed로 모듈 초기화 시 생성한다. 기존 공지 3개와 생성 데이터 50개를 사용하며 서버 영속 저장은 아니다.
+- MSW는 제목 부분 일치 검색 후 totalRecords를 계산하고 skip/take를 적용한다. take: 0은 skip 이후 전체 조회다.
+- Repository·HttpClient는 기존 전달 구조를 유지한다. useTableState·TableSearchToolbar·MockRepository 공통화는 후속 TODO다.
