@@ -6,6 +6,7 @@ import { cn } from '@/src/utils/common/cn';
 import { useMenuTree } from '@/src/hooks/common/useMenuTree';
 import BoxMenuExpanded from '@/src/pages/(web)/(authenticated)/-components/sidebars/containers/BoxMenuExpanded';
 import BoxMenuCollapsed from '@/src/pages/(web)/(authenticated)/-components/sidebars/containers/BoxMenuCollapsed';
+import BoxLogo from '@/src/pages/(web)/(authenticated)/-components/sidebars/containers/BoxLogo';
 
 const SidebarMenu = () => {
 	const open = useSidebarStore(state => state.open);
@@ -22,8 +23,7 @@ const SidebarMenu = () => {
 					style={{ width: open ? 220 : 80 }}
 				>
 					{/* [1] 로고 */}
-					{/* TODO: MES의 BoxLogo와 시스템 선택 영역을 연결합니다. */}
-					<Container className={cn('h-header-web border-divider shrink-0 border-r')} />
+					<BoxLogo />
 
 					{/* [2] 메뉴 목록 */}
 					{open ? <BoxMenuExpanded data={data} /> : <BoxMenuCollapsed data={data} />}

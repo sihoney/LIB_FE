@@ -287,7 +287,9 @@ MES의 공통 테마 옵션 → 웹 테마 → ThemeProvider 구성을 따른다
 - SidebarMenu에는 기존 두 링크만 옮겼다. 새 메뉴 기능이 아니며 서버 메뉴 연결 전 임시 데이터다.
 - 테마 스위치 파일의 사용자 변경은 보존했다. 기존 스위치의 표시 위치만 임시 시작 화면으로 옮겼으며 헤더에는 추가하지 않았다.
 
-후속 TODO: 서버 메뉴·권한과 useMenuTree 연결, BoxLogo·계정 데이터 연결, KeepAliveOutlet, 테마 전환의 MES 공통 설정 UI 연결. 인증과 / → /dashboard 전환 TODO는 유지한다. 자동 모바일 접기와 임의의 Store 영속 저장은 추가하지 않았다.
+BoxLogo를 연결했다. 펼침 상태에서는 LIBRARY, 접힘 상태에서는 LIB를 표시하며 로고를 누르면 시작 화면으로 이동한다. SelectSystem은 LIB만 표시하는 비활성 선택 상자이며 실제 시스템 전환 기능은 없다.
+
+후속 TODO: 서버 메뉴·권한과 useMenuTree 연결, 계정 데이터 연결, KeepAliveOutlet, 테마 전환의 MES 공통 설정 UI 연결. 인증과 / → /dashboard 전환 TODO는 유지한다. 자동 모바일 접기와 임의의 Store 영속 저장은 추가하지 않았다.
 
 ### 사이드바 메뉴 구현
 
