@@ -1,5 +1,6 @@
 import { queryClient } from '@/src/contexts/QueryProvider';
 import {
+	NOTICE_DELETE_META,
 	NOTICE_UPDATE_META,
 	NOTICE_CREATE_META,
 	NOTICE_DETAIL_META,
@@ -8,7 +9,12 @@ import {
 } from '@/src/consts/modules/dev/notice';
 import type NoticeRepository from '@/src/repositories/modules/dev/noticeRepository';
 import type { IRequestBody } from '@/src/types/common/repository';
-import type { INoticeCreate, INoticeSearch, INoticeUpdate } from '@/src/types/modules/dev/notice';
+import type {
+	INotice,
+	INoticeCreate,
+	INoticeSearch,
+	INoticeUpdate,
+} from '@/src/types/modules/dev/notice';
 import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
 
 export default class NoticeService {
@@ -74,5 +80,22 @@ export default class NoticeService {
 						],
 					}),
 				]),
+		});
+
+	public useDeleteNotice = () =>
+		useMutation({
+			mutationKey: [
+				NOTICE_MODULE,
+				NOTICE_DELETE_META.signature,
+				NOTICE_DELETE_META.functionCode,
+			],
+			mutationFn: (body: IRequestBody<Pick<INotice, 'id'>>) =>
+				this.noticeRepository.deleteNotice(body),
+			// MES처럼 삭제 성공 시 목록만 무효화합니다.
+			// TODO: 삭제된 공지의 기존 상세 캐시 정책은 후속 작업에서 결정합니다.
+			onSuccess: () =>
+				queryClient.invalidateQueries({
+					queryKey: [NOTICE_MODULE, NOTICE_META.signature, NOTICE_META.functionCode],
+				}),
 		});
 }

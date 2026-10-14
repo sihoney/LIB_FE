@@ -19,3 +19,8 @@ export const NOTICE_UPDATE_META = {
 	signature: 'Notice',
 	functionCode: 'Update',
 } as const;
+
+export const NOTICE_DELETE_META = {
+	signature: 'Notice',
+	functionCode: 'Delete',
+} as const;

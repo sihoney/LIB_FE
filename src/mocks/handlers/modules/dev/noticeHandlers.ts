@@ -1,6 +1,7 @@
 import { notices } from '@/src/mocks/data/modules/dev/notices';
 import { ENV_API_BASE_URL } from '@/src/consts/common/envKeys';
 import {
+	NOTICE_DELETE_META,
 	NOTICE_UPDATE_META,
 	NOTICE_CREATE_META,
 	NOTICE_DETAIL_META,
@@ -40,6 +41,11 @@ const updateEndpoint = new URL(
 	apiBase,
 ).href;
 
+const deleteEndpoint = new URL(
+	`v2/${NOTICE_MODULE}/${NOTICE_DELETE_META.signature}/${NOTICE_DELETE_META.functionCode}/Update`,
+	apiBase,
+).href;
+
 export const noticeHandlers = [
 	http.post(endpoint, async ({ request }) => {
 		const body = (await request.json()) as IRequestBody<INoticeSearch>;
@@ -49,7 +55,9 @@ export const noticeHandlers = [
 		// 제목 검색 → 검색 결과 전체 건수 → 페이지 자르기 순서입니다.
 		// TODO: 다른 조회에서 반복되면 MES BaseMockRepository의 검색·페이징 처리로 이동합니다.
 		const title = body.data?.title?.trim().toLocaleLowerCase() ?? '';
-		const rows = notices.filter(notice => notice.title.toLocaleLowerCase().includes(title));
+		const rows = notices.filter(
+			notice => !notice.isDeleted && notice.title.toLocaleLowerCase().includes(title),
+		);
 
 		const skip = body.skip ?? 0;
 		const take = body.take ?? 20;
@@ -76,7 +84,9 @@ export const noticeHandlers = [
 			success: true,
 			returnMess: '',
 			returnMessCode: 0,
-			data: notices.find(notice => notice.id === body.data?.noticeId) ?? null,
+			data:
+				notices.find(notice => notice.id === body.data?.noticeId && !notice.isDeleted) ??
+				null,
 		});
 	}),
 
@@ -102,6 +112,7 @@ export const noticeHandlers = [
 		// 새로고침하면 초기 데이터로 돌아갑니다.
 		const notice: INotice = {
 			id: Math.max(0, ...notices.map(item => item.id)) + 1,
+			isDeleted: false,
 			title,
 			content,
 		};
@@ -141,7 +152,7 @@ export const noticeHandlers = [
 				data: null,
 			});
 		}
-		const index = notices.findIndex(notice => notice.id === data.id);
+		const index = notices.findIndex(notice => notice.id === data.id && !notice.isDeleted);
 		if (index < 0) {
 			return HttpResponse.json<IResponseBody<INotice | null>>({
 				success: false,
@@ -162,6 +173,38 @@ export const noticeHandlers = [
 			returnMess: '',
 			returnMessCode: 0,
 			data: updated,
+		});
+	}),
+
+	// MES처럼 논리 삭제합니다. 데이터와 ID는 남기고 조회 대상에서 제외합니다.
+	http.post(deleteEndpoint, async ({ request }) => {
+		const body = (await request.json()) as IRequestBody<Pick<INotice, 'id'>>;
+		const id = body?.data?.id;
+		await delay(350);
+		if (typeof id !== 'number' || !Number.isSafeInteger(id) || id <= 0) {
+			return HttpResponse.json<IResponseBody<INotice | null>>({
+				success: false,
+				returnMess: '삭제할 공지 ID를 확인해 주세요.',
+				returnMessCode: 'INVALID_NOTICE',
+				data: null,
+			});
+		}
+		const index = notices.findIndex(notice => notice.id === id && !notice.isDeleted);
+		if (index < 0) {
+			return HttpResponse.json<IResponseBody<INotice | null>>({
+				success: false,
+				returnMess: '삭제할 공지글을 찾을 수 없습니다.',
+				returnMessCode: 'NOTICE_NOT_FOUND',
+				data: null,
+			});
+		}
+		// 객체를 교체해 캐시에 남은 삭제 전 데이터와 Mock 저장소를 구분합니다.
+		notices[index] = { ...notices[index], isDeleted: true };
+		return HttpResponse.json<IResponseBody<INotice | null>>({
+			success: true,
+			returnMess: '',
+			returnMessCode: 0,
+			data: notices[index],
 		});
 	}),
 ];

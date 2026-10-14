@@ -56,4 +56,17 @@ export default class HttpClient {
 		}
 		return response.data;
 	};
+
+	// MES의 delete도 실제 HTTP 메서드는 POST입니다.
+	public delete = async <T, U>({ url, meta, body, signal }: IRequestConfig<T>) => {
+		const response = await this.axios.post<IResponseBody<U>>(
+			`v2/${url}/${meta.signature}/${meta.functionCode}/Update`,
+			body,
+			{ signal },
+		);
+		if (!response.data.success) {
+			throw new Error(response.data.returnMess || '요청을 처리하지 못했습니다.');
+		}
+		return response.data;
+	};
 }

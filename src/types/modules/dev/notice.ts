@@ -2,6 +2,7 @@ export interface INotice {
 	id: number;
 	title: string;
 	content: string;
+	isDeleted: boolean;
 }
 
 // 테스트용 업무 계약입니다. 실제 도서 API의 검색 조건과는 분리합니다.

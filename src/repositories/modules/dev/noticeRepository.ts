@@ -1,4 +1,5 @@
 import {
+	NOTICE_DELETE_META,
 	NOTICE_UPDATE_META,
 	NOTICE_CREATE_META,
 	NOTICE_DETAIL_META,
@@ -44,6 +45,13 @@ export default class NoticeRepository {
 		this.httpClient.patch<INoticeUpdate, INotice>({
 			url: NOTICE_MODULE,
 			meta: NOTICE_UPDATE_META,
+			body,
+		});
+
+	public deleteNotice = (body: IRequestBody<Pick<INotice, 'id'>>) =>
+		this.httpClient.delete<Pick<INotice, 'id'>, INotice>({
+			url: NOTICE_MODULE,
+			meta: NOTICE_DELETE_META,
 			body,
 		});
 }

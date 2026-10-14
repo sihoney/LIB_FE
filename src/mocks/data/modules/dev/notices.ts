@@ -8,16 +8,19 @@ faker.seed(20261011); // seed: 난수 생성의 시작값
 const fixedNotices: INotice[] = [
 	{
 		id: 1,
+		isDeleted: false,
 		title: '도서관 이용 안내',
 		content: '도서관 이용 전 이용 규칙을 확인해 주세요.',
 	},
 	{
 		id: 2,
+		isDeleted: false,
 		title: '신규 도서 입고 안내',
 		content: '이번 달 새로 들어온 도서를 확인해 주세요.',
 	},
 	{
 		id: 3,
+		isDeleted: false,
 		title: '자료실 정비 안내',
 		content: '자료실 정비 중에는 일부 서가 이용이 제한됩니다.',
 	},
@@ -30,6 +33,7 @@ export const notices: INotice[] = [
 	...fixedNotices,
 	...Array.from({ length: 50 }, (_, index) => ({
 		id: index + 4,
+		isDeleted: false,
 		title:
 			faker.helpers.arrayElement(['도서', '자료실', '회원', '행사']) + ' 안내 ' + (index + 1),
 		content: faker.lorem.paragraph(),
