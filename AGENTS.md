@@ -29,7 +29,7 @@
 
 ## 상태와 환경 설정
 
-- 도입 후 서버 데이터는 TanStack Query, 공유 UI 상태는 Zustand, 폼은 react-hook-form·Zod, 공유 가능한 검색 조건은 TanStack Router로 관리한다.
+- 도입 후 서버 데이터는 TanStack Query, 공유 UI 상태는 Zustand, 폼은 react-hook-form·Zod, 일반 목록의 검색 조건·페이지는 로컬 상태로 관리하고, URL 공유·직접 진입이 필요한 조건은 TanStack Router로 관리한다.
 - 서버 데이터 전체를 Zustand나 로컬 state에 복제하지 않는다. 편집 중 폼 초안은 별도로 관리할 수 있다.
 - 한 컴포넌트에서만 쓰는 일시적 UI 상태는 로컬 state를 사용한다.
 - 브라우저 환경값은 `src/consts/common/envKeys.ts`의 `ENV_*` 상수로 읽는다. Node용 Vite 설정은 `loadEnv`를 사용한다.

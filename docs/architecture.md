@@ -4,16 +4,22 @@
 
 LIB_FE는 MES_FE의 구조를 참고하는 독립적인 도서관 프론트엔드다. MSW·Faker로 화면과 업무 흐름을 먼저 검증하고, 이후 별도 LIB_BE의 API로 연결한다. MES의 구조가 해결하는 문제를 이해하면서 필요한 공통화를 단계적으로 진행한다.
 
-2026-10-05 기준:
+도서·회원·대출의 데이터 관계와 업무 규칙은 [도메인 설계 초안](domain-design.md)에 기록한다. 요구사항의 필수 규칙과 미확정 제안 정책을 구분하며, 설계 기록을 구현 완료로 간주하지 않는다.
+
+2026-10-14 추가: Book 상수·저장/목록/검색 타입·목록 API 계약, 고정 도서·최소 대출 Mock 데이터와 가용 수량 계산 함수를 준비했다. 상세 계약은 [도메인 설계 문서](domain-design.md#목록-api-계약)를 따른다. 당시 도서 MSW 핸들러·Repository·Service·목록 화면은 미연결이었으며, 2026-10-17 연결했다(§23). 기존 공지글은 유지하며 도서 화면 전환 시 제거 범위를 별도 확인한다.
+
+2026-10-17 현재 상태 (과거 도입 기록은 아래 절 참고):
 
 | 상태      | 구성                                                             |
 | --------- | ---------------------------------------------------------------- |
 | 구현됨    | React 19, TypeScript 5.9, Vite 7, SWC, Oxlint, Prettier, LF 설정 |
 | 구현됨    | 프로젝트 루트 `@` 별칭, 개발 환경값, `envKeys.ts`, 환경변수 타입 |
 | 구현됨    | 앱 시작 흐름, MSW·Query·Router, Axios 조회, 테스트 공지글        |
-| 도입 예정 | Faker, react-hook-form·Zod                                       |
+| 도입 예정 | react-hook-form·Zod                                              |
 | 구현됨    | MUI·Tailwind, 웹 테마·ThemeProvider, Zustand 테마 저장           |
-| 도입 예정 | 공통 레이아웃, 인증, 도서·회원·대출 기능                         |
+| 구현됨    | Faker 공지 초기화, 공통 레이아웃, 도서 목록 조회                 |
+
+도서 등록·수정·삭제, 인증·회원·대출 업무는 미구현이다.
 
 이 문서의 예시 경로는 목표 배치이며, 파일이 이미 존재한다는 뜻은 아니다. 사용하지 않는 빈 폴더와 기반 클래스는 생성하지 않는다. 규칙은 현재 문서·리뷰 기준이며 전체 의존 방향을 검사하는 자동 린트 규칙은 아직 없다.
 
@@ -82,16 +88,16 @@ src/{layer}/modules/sys/      로그인·계정·역할·접근 제어
 
 이 규칙을 `pages`, `contexts`, `networks`에 기계적으로 적용하지 않는다. 페이지는 라우트 트리, 나머지는 각 기반 책임에 맞춰 배치한다.
 
-| 예시 파일                                         | 책임                           |
-| ------------------------------------------------- | ------------------------------ |
-| `types/common/repository.ts`                      | 공통 요청·응답·페이징 계약     |
-| `types/modules/lib/libBook.ts`                    | 도서 DTO                       |
-| `schemas/modules/lib/libBook.ts`                  | 도서 입력 검증                 |
-| `repositories/modules/lib/libBookRepository.ts`   | 도서 API 요청                  |
-| `services/modules/lib/libBookService.ts`          | 도서 조회·변경 훅              |
-| `components/tables/modules/lib/TableLibBooks.tsx` | 도서 목록 표시                 |
-| `repositories/modules/sys/authRepository.ts`      | 로그인·인증 요청               |
-| `consts/common/envKeys.ts`                        | 구현되어 있는 환경값 접근 지점 |
+| 예시 파일                                      | 책임                           |
+| ---------------------------------------------- | ------------------------------ |
+| `types/common/repository.ts`                   | 공통 요청·응답·페이징 계약     |
+| `types/modules/lib/book.ts`                    | 도서 DTO                       |
+| `schemas/modules/lib/book.ts`                  | 도서 입력 검증                 |
+| `repositories/modules/lib/bookRepository.ts`   | 도서 API 요청                  |
+| `services/modules/lib/bookService.ts`          | 도서 조회·변경 훅              |
+| `components/tables/modules/lib/TableBooks.tsx` | 도서 목록 표시                 |
+| `repositories/modules/sys/authRepository.ts`   | 로그인·인증 요청               |
+| `consts/common/envKeys.ts`                     | 구현되어 있는 환경값 접근 지점 |
 
 회원 프로필·탈퇴·대출 이력은 `lib` 업무다. 로그인 계정·인증 상태·역할은 `sys` 책임이다. 인증 Service가 도서·대출 Service를 역으로 호출하지 않는다. 권한에 따른 화면 조립과 사용자 변경 시 캐시 초기화는 상위 계층·조립 지점에서 연결한다.
 
@@ -99,13 +105,13 @@ src/{layer}/modules/sys/      로그인·계정·역할·접근 제어
 
 ## 5. 상태 소유권
 
-| 상태                          | 도입할 도구           | 원칙                               |
-| ----------------------------- | --------------------- | ---------------------------------- |
-| 도서 목록·회원 정보·대출 기록 | TanStack Query        | 서버 데이터의 단일 조회 기준       |
-| 사이드바·테마 등 공유 UI 상태 | Zustand               | 서버 목록을 복제하지 않음          |
-| 등록·수정 폼 초안·입력 오류   | react-hook-form + Zod | 서버 원본과 편집 중 초안을 구분    |
-| 공유·복원할 검색 조건·페이지  | TanStack Router       | URL 값과 요청 조건을 일관되게 변환 |
-| 단일 화면의 모달 열림 등      | React 로컬 state·Hook | 공유 필요가 없으면 전역화하지 않음 |
+| 상태                          | 도입할 도구           | 원칙                                           |
+| ----------------------------- | --------------------- | ---------------------------------------------- |
+| 도서 목록·회원 정보·대출 기록 | TanStack Query        | 서버 데이터의 단일 조회 기준                   |
+| 사이드바·테마 등 공유 UI 상태 | Zustand               | 서버 목록을 복제하지 않음                      |
+| 등록·수정 폼 초안·입력 오류   | react-hook-form + Zod | 서버 원본과 편집 중 초안을 구분                |
+| 일반 목록 검색 조건·페이지    | React 로컬 state·Hook | 입력값과 적용 조건을 구분, 반복 확인 후 공통화 |
+| URL 공유·직접 진입 조건       | TanStack Router       | 해당 조건에 한해 URL과 요청을 연결             |
 
 도서 등록 후 도서 목록을 무효화하고, 대출·반납 후에는 도서 재고·대출 현황·회원 이력·대시보드 등 영향을 받는 쿼리를 갱신한다. 실제 Query key·정책은 기능 구현 시 정의한다. MES의 짧은 캐시 시간·영속 캐시 설정을 검토 없이 복사하지 않는다.
 
@@ -139,13 +145,13 @@ MSW HTTP 핸들러 → Mock 업무 로직·Repository → Mock 저장소
 
 아래 파일은 앞으로 기능을 구현할 때 생성한다.
 
-1. `types/modules/lib/libBook.ts`: 도서 응답 타입 정의.
-2. `repositories/modules/lib/libBookRepository.ts`: 공통 계약으로 도서 목록 요청.
-3. `services/modules/lib/libBookService.ts`: 요청을 Query 훅으로 제공.
+1. `types/modules/lib/book.ts`: 도서 응답 타입 정의.
+2. `repositories/modules/lib/bookRepository.ts`: 공통 계약으로 도서 목록 요청.
+3. `services/modules/lib/bookService.ts`: 요청을 Query 훅으로 제공.
 4. `services/services.ts`: HttpClient·Repository·Service 인스턴스 연결.
-5. `mocks/repositories/modules/lib/libBookMockRepository.ts`: 요청과 일치하는 도서 Mock 응답.
-6. `components/tables/modules/lib/TableLibBooks.tsx`: 전달받은 행을 테이블로 표시.
-7. `pages/(web)/(authenticated)/lib/libBook/index.tsx`: 검색 조건·Service·테이블을 조립.
+5. `mocks/repositories/modules/lib/bookMockRepository.ts`: 요청과 일치하는 도서 Mock 응답.
+6. `components/tables/modules/lib/TableBooks.tsx`: 전달받은 행을 테이블로 표시.
+7. `pages/(web)/(authenticated)/lib/book/index.tsx`: 검색 조건·Service·테이블을 조립.
 
 실제 라우트 경로·인증 레이아웃은 Router 도입 단계에서 확정한다. 새 화면에 서버 호출을 추가할 때 먼저 요청·응답 계약과 Mock 시나리오를 맞춘다.
 
@@ -383,3 +389,29 @@ ButtonIcon·Icon은 MES 래퍼를 사용하며 icon 매핑에는 사이드바 �
 - 마지막 페이지 보정은 목록 페이지에서 직접 처리한다. 조회 성공·조회 완료·isPlaceholderData=false일 때 전체 건수로 범위를 계산하고 범위를 벗어난 페이지를 마지막 페이지로 변경한다. 0건이면 pageIndex=0이다.
 - 페이지 변경은 현재 컴포넌트의 조건부 상태 조정으로 처리하여 범위를 벗어난 화면을 그리기 전에 다시 렌더링한다. 검색 조건은 유지하며 잘못된 응답·이전 결과를 기준으로 보정하지 않는다.
 - TODO: MES 공통 Table 도입 시 직접 작성한 페이지 보정을 제거하고 material-react-table의 범위 보정에 맡긴다. 확인창·오류 알림도 기존 TODO에 따라 공통화한다.
+
+## 23. 도서 목록 조회
+
+- 2026-10-17: `POST /v2/Lib/Book/GetBookList/GetData`를 MSW → HttpClient → BookRepository → BookService → `/lib/book` 화면에 연결했다. 공지글과 기존 사용자 작성 데이터·재고 계산 함수를 유지한다.
+- 제목·저자 부분 일치와 분류 일치 조건을 AND로 적용한다. 삭제 도서 제외 → 검색 → ID 오름차순 → 전체 건수 → 페이징 순서이며, 가용 수량은 대출 기록으로 계산한다.
+- 잘못된 JSON·검색값·분류·페이징 값은 `INVALID_BOOK_LIST_REQUEST` 실패 응답이다. Repository는 필수 `totalRecords`를 런타임에서 확인한다. 재고 불일치는 서버 오류로 드러낸다.
+- MES_FE의 `useTableState` 흐름을 참고해 입력 중 조건, 적용 조건, 페이지를 로컬 상태로 분리했다. 검색·초기화 시 첫 페이지로 이동하며 같은 조건·첫 페이지의 검색은 재조회한다. 기본 페이지 크기는 10이다.
+- 일반 목록 상태를 URL과 자동 동기화하지 않는다. URL 공유·특정 대상으로 직접 진입해야 하는 조건에 Router를 사용한다. 공통 훅·테이블은 도서 CRUD 등의 반복을 확인한 뒤 추출한다.
+- 메뉴·방문 탭에 도서 목록을 연결했다. 일반 Outlet을 사용하므로 화면을 떠났다 돌아오면 로컬 검색·페이지가 초기화된다. KeepAlive, 도서 CRUD, 사용자 지정 정렬은 후속 작업이다.
+- 조회 중 이전 결과 안내, 오류·재시도, 빈 결과, 보유·가용 수량과 대출 가능 여부를 표시한다.
+
+### 도서 목록 검증 기록 (2026-10-17)
+
+- 기존 MES_FE에 설치된 playwright-core와 로컬 Edge를 사용한 일회성 브라우저 검증을 수행했다. LIB_FE에 테스트 의존성을 추가하지 않았다. 검증 스크립트는 Git 제외 경로 `node_modules/.tmp/verify-books.mjs`에 있다.
+- 실제 브라우저 fetch → MSW 경계에서 단일·복합 검색, 공백 처리, 빈 결과, 가용 수량 3·1·0·0·2, 삭제 필드 제외, totalRecords, 페이지 범위 밖·take: 0, 잘못된 검색·분류·페이징 입력의 실패 응답을 확인했다.
+- 화면 검색·초기화·빈 결과, 브라우저 메모리에만 도서를 추가한 12건의 10개 단위 페이지 이동, 검색 시 첫 페이지 복귀, 재조회 실패와 재시도 복구를 확인했다. 기존 공지글 목록·검색·상세 이동도 통과했다.
+- Mock 검증은 실제 서버의 인증·권한·동시성 검증을 대체하지 않는다. 공지글 변경 CRUD의 전체 회귀는 이번 검증 범위에 포함하지 않았다.
+- 추가 브라우저 검증(`node_modules/.tmp/verify-books-edge.mjs`): 저자·분류 UI 검색, 로딩 표시·검색 버튼 잠금, 잘못된 JSON, 대소문자 검색, 재고 불일치 HTTP 500, 초기 조회 실패 후 재시도 복구, 메뉴 이동을 통과했다. 검증 스크립트의 상태 선택자 중복을 수정한 뒤 재실행했다.
+- `pnpm.cmd lint`, `pnpm.cmd build`, `git diff --check` 통과. 최초 린트에서 발견한 포맷을 대상 파일에만 적용했다. 개발 서버·빌드는 샌드박스 상위 폴더 접근 제한 때문에 제한 밖에서 실행했다.
+
+### 작업계획서 상태 변경 제안
+
+- BOOK-04 검색, BOOK-06 재고 표시, UX-01 도서 목록 로딩·오류·빈 상태: 도서 목록 범위 구현·브라우저 검증 완료로 기록 가능. UX-01의 다른 업무 화면 적용은 남아 있다.
+- BOOK-07 페이징: 검색 연동·totalRecords·페이지 이동 완료, 사용자 지정 정렬 연동은 BOOK-05 구현 이후 검증하므로 진행 중으로 유지한다.
+- BOOK-01~03 CRUD와 BOOK-05 사용자 지정 정렬은 미착수다. COMM-10의 도서 등록 후 캐시 갱신 완료 조건도 아직 충족하지 않았다.
+- 스프레드시트는 직접 수정하지 않았다.
