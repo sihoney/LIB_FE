@@ -15,11 +15,17 @@ import {
 } from '@mui/material';
 import Button from '@/src/components/ui/buttons/Button';
 import { BOOK_CATEGORIES } from '@/src/consts/modules/lib/book';
-import type { IBookSearch, TBookCategory } from '@/src/types/modules/lib/book';
+import type { IBookListItem, IBookSearch, TBookCategory } from '@/src/types/modules/lib/book';
 import services from '@/src/services/services';
+import ModalCreateBook from '@/src/pages/(web)/(authenticated)/lib/book/-components/modals/ModalCreateBook';
+import ModalUpdateBook from '@/src/pages/(web)/(authenticated)/lib/book/-components/modals/ModalUpdateBook';
 
 const PAGE_SIZE = 10;
-const emptyDraft = { title: '', author: '', category: '' as TBookCategory | '' };
+const emptyDraft = {
+	title: '',
+	author: '',
+	category: '' as TBookCategory | '',
+};
 
 const Component = () => {
 	// MES의 검색 폼 → 적용 조건 → requestBody 흐름을 먼저 페이지에서 구현합니다.
@@ -29,6 +35,9 @@ const Component = () => {
 		data: {},
 		pageIndex: 0,
 	});
+	const [createBook, setCreateBook] = useState(false);
+	const [updateBook, setUpdateBook] = useState<IBookListItem | null>(null);
+
 	const query = services.bookService.useGetBookList({
 		data: search.data,
 		skip: search.pageIndex * PAGE_SIZE,
@@ -43,12 +52,15 @@ const Component = () => {
 			search.data.title === data.title &&
 			search.data.author === data.author &&
 			search.data.category === data.category;
+
 		if (sameConditions && search.pageIndex === 0) void query.refetch();
 		else setSearch({ data, pageIndex: 0 });
 	};
 	const handleSearch = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
+
 		if (isBusy) return;
+
 		applySearch({
 			title: draft.title.trim() || undefined,
 			author: draft.author.trim() || undefined,
@@ -61,7 +73,9 @@ const Component = () => {
 			<Typography component='h1' variant='h4' className='mb-4 font-bold'>
 				도서 목록
 			</Typography>
+
 			<form onSubmit={handleSearch} className='my-4 flex flex-wrap items-start gap-3'>
+				{/* input 목록 */}
 				<TextField
 					label='제목'
 					size='small'
@@ -98,6 +112,8 @@ const Component = () => {
 						</MenuItem>
 					))}
 				</TextField>
+
+				{/* 버튼 목록 */}
 				<Button type='submit' disabled={isBusy}>
 					검색
 				</Button>
@@ -114,7 +130,23 @@ const Component = () => {
 				<Button type='button' disabled={isBusy} onClick={() => void query.refetch()}>
 					재조회
 				</Button>
+				<Button type='button' disabled={isBusy} onClick={() => setCreateBook(true)}>
+					등록
+				</Button>
 			</form>
+
+			{createBook && (
+				<ModalCreateBook open={createBook} onClose={() => setCreateBook(false)} />
+			)}
+			{updateBook && (
+				<ModalUpdateBook
+					key={updateBook.id}
+					open
+					data={updateBook}
+					onClose={() => setUpdateBook(null)}
+				/>
+			)}
+
 			{isBusy && (
 				<p role='status'>
 					{query.isPlaceholderData
@@ -122,6 +154,7 @@ const Component = () => {
 						: '도서를 불러오고 있습니다.'}
 				</p>
 			)}
+
 			{query.isError && (
 				<Alert
 					severity='error'
@@ -140,6 +173,7 @@ const Component = () => {
 						: '도서 목록을 불러오지 못했습니다.'}
 				</Alert>
 			)}
+
 			{query.data && (
 				<>
 					<p className='my-3'>
@@ -157,6 +191,7 @@ const Component = () => {
 										'보유 수량',
 										'가용 수량',
 										'대출 가능 여부',
+										'관리',
 									].map(label => (
 										<TableCell key={label}>{label}</TableCell>
 									))}
@@ -175,11 +210,22 @@ const Component = () => {
 										<TableCell>
 											{book.availableQuantity > 0 ? '대출 가능' : '대출 불가'}
 										</TableCell>
+										<TableCell>
+											<Button
+												type='button'
+												variant='outlined'
+												disabled={isBusy}
+												onClick={() => setUpdateBook(book)}
+											>
+												수정
+											</Button>
+										</TableCell>
 									</TableRow>
 								))}
+
 								{query.data.data.length === 0 && (
 									<TableRow>
-										<TableCell colSpan={6}>검색 결과가 없습니다.</TableCell>
+										<TableCell colSpan={7}>검색 결과가 없습니다.</TableCell>
 									</TableRow>
 								)}
 							</TableBody>

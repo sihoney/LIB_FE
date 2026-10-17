@@ -14,3 +14,13 @@ export const BOOK_LIST_META = {
 	signature: 'Book',
 	functionCode: 'GetBookList',
 } as const;
+
+export const BOOK_CREATE_META = {
+	signature: 'Book',
+	functionCode: 'Create',
+} as const;
+
+export const BOOK_UPDATE_META = {
+	signature: 'Book',
+	functionCode: 'Update',
+} as const;

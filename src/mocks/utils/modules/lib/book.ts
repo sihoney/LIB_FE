@@ -11,9 +11,7 @@ export const getBookAvailableQuantity = (
 		throw new Error('도서 보유 수량은 0 이상의 안전한 정수여야 합니다.');
 	}
 
-	const outstandingCount = loans.filter(
-		loan => loan.bookId === book.id && loan.returnedAt === null && loan.cancelledAt === null,
-	).length;
+	const outstandingCount = getBookOutstandingQuantity(book.id, loans);
 	const availableQuantity = book.totalQuantity - outstandingCount;
 
 	// 잘못된 초기 데이터나 업무 처리 결과를 0으로 덮어 숨기지 않습니다.
@@ -23,3 +21,12 @@ export const getBookAvailableQuantity = (
 
 	return availableQuantity;
 };
+
+// 목록 가용 수량과 수정 가능한 총 수량이 같은 미반납 기준을 사용하도록 분리합니다.
+export const getBookOutstandingQuantity = (
+	bookId: number,
+	loans: readonly IMockLoanStockRecord[],
+): number =>
+	loans.filter(
+		loan => loan.bookId === bookId && loan.returnedAt === null && loan.cancelledAt === null,
+	).length;
