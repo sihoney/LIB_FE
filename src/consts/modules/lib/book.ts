@@ -24,3 +24,8 @@ export const BOOK_UPDATE_META = {
 	signature: 'Book',
 	functionCode: 'Update',
 } as const;
+
+export const BOOK_DELETE_META = {
+	signature: 'Book',
+	functionCode: 'Delete',
+} as const;

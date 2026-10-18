@@ -3,6 +3,7 @@ import {
 	BOOK_AUTHOR_MAX_LENGTH,
 	BOOK_CATEGORIES,
 	BOOK_CREATE_META,
+	BOOK_DELETE_META,
 	BOOK_LIST_META,
 	BOOK_MODULE,
 	BOOK_TITLE_MAX_LENGTH,
@@ -17,6 +18,7 @@ import {
 import type {
 	IBook,
 	IBookCreate,
+	IBookDelete,
 	IBookListRequest,
 	IBookListResponse,
 	IBookUpdate,
@@ -37,13 +39,22 @@ const updateEndpoint = new URL(
 	`v2/${BOOK_MODULE}/${BOOK_UPDATE_META.signature}/${BOOK_UPDATE_META.functionCode}/Update`,
 	apiBase,
 ).href;
+const deleteEndpoint = new URL(
+	`v2/${BOOK_MODULE}/${BOOK_DELETE_META.signature}/${BOOK_DELETE_META.functionCode}/Update`,
+	apiBase,
+).href;
 
+// isRecord:
+// - value가 객체 형태의 JSON 데이터인지 검사
+// - request.json() 결과는 런타임에 무엇이 올지 확신할 수 없어 처음에는 unknown
+// - isRecord를 통과한 뒤, value.data, value.is 처럼 속성에 안전하게 접근
 const isRecord = (value: unknown): value is Record<string, unknown> =>
 	typeof value === 'object' && value !== null && !Array.isArray(value);
 
 // TypeScript 타입과 별개로 HTTP 경계에서 실제 입력을 검사합니다. (서버 입력값 검증)
 const isBookListRequest = (value: unknown): value is IBookListRequest => {
 	if (!isRecord(value)) return false;
+
 	for (const key of ['skip', 'take']) {
 		const number = value[key];
 		if (
@@ -54,6 +65,7 @@ const isBookListRequest = (value: unknown): value is IBookListRequest => {
 	}
 	if (value.data === undefined) return true;
 	if (!isRecord(value.data)) return false;
+
 	const { title, author, category } = value.data;
 	return (
 		(title === undefined || typeof title === 'string') &&
@@ -64,10 +76,12 @@ const isBookListRequest = (value: unknown): value is IBookListRequest => {
 };
 
 const getBookCreateData = (value: unknown): IBookCreate | null => {
+	// 객체 타입 검사
 	if (!isRecord(value) || !isRecord(value.data)) return null;
 
 	const { title, author, category, totalQuantity } = value.data;
 
+	// data 타입 검사
 	if (
 		typeof title !== 'string' ||
 		typeof author !== 'string' ||
@@ -76,6 +90,7 @@ const getBookCreateData = (value: unknown): IBookCreate | null => {
 	)
 		return null;
 
+	// trim 후 값 유효성 검사(길이, 빈 문자열, 카테고리 범위, 숫자 범위)
 	const trimmedTitle = title.trim();
 	const trimmedAuthor = author.trim();
 	if (
@@ -103,6 +118,13 @@ const getBookUpdateData = (value: unknown): IBookUpdate | null => {
 	const createData = getBookCreateData(value);
 	if (typeof id !== 'number' || !Number.isSafeInteger(id) || id <= 0 || !createData) return null;
 	return { id, ...createData };
+};
+
+const getBookDeleteData = (value: unknown): IBookDelete | null => {
+	if (!isRecord(value) || !isRecord(value.data)) return null;
+	const id = value.data.id;
+	if (typeof id !== 'number' || !Number.isSafeInteger(id) || id <= 0) return null;
+	return { id };
 };
 
 export const bookHandlers = [
@@ -170,6 +192,7 @@ export const bookHandlers = [
 
 		await delay(350);
 
+		// 입력값 검증 실패 시
 		// 등록 화면 검증과 별개로 HTTP 경계에서 도서 정책을 다시 검사합니다.
 		if (!data) {
 			return HttpResponse.json<IResponseBody<IBook | null>>({
@@ -198,7 +221,10 @@ export const bookHandlers = [
 	// [3] 도서 수정: 목록 재고 계산과 동일한 미반납 수량보다 보유 수량을 낮출 수 없습니다.
 	http.post(updateEndpoint, async ({ request }) => {
 		const data = getBookUpdateData(await request.json().catch(() => undefined));
+
 		await delay(350);
+
+		// 입력값 검증 실패 시
 		if (!data) {
 			return HttpResponse.json<IResponseBody<IBook | null>>({
 				success: false,
@@ -207,6 +233,8 @@ export const bookHandlers = [
 				data: null,
 			});
 		}
+
+		// 404, 해당 도서 정보가 없는 경우
 		const index = books.findIndex(book => book.id === data.id && !book.isDeleted);
 		if (index < 0) {
 			return HttpResponse.json<IResponseBody<IBook | null>>({
@@ -216,6 +244,7 @@ export const bookHandlers = [
 				data: null,
 			});
 		}
+
 		const outstandingQuantity = getBookOutstandingQuantity(data.id, loans);
 		if (data.totalQuantity < outstandingQuantity) {
 			return HttpResponse.json<IResponseBody<IBook | null>>({
@@ -225,13 +254,62 @@ export const bookHandlers = [
 				data: null,
 			});
 		}
-		const updated: IBook = { ...books[index], ...data };
+		const updated: IBook = {
+			...books[index],
+			...data,
+		};
 		books[index] = updated;
 		return HttpResponse.json<IResponseBody<IBook>>({
 			success: true,
 			returnMess: '',
 			returnMessCode: 0,
 			data: updated,
+		});
+	}),
+
+	// [4] 도서 삭제: 대출 이력 보존을 위해 행은 남기고 목록 조회에서만 제외합니다.
+	http.post(deleteEndpoint, async ({ request }) => {
+		const data = getBookDeleteData(await request.json().catch(() => undefined));
+
+		await delay(350);
+
+		if (!data) {
+			return HttpResponse.json<IResponseBody<IBook | null>>({
+				success: false,
+				returnMess: '삭제할 도서 ID를 확인해 주세요.',
+				returnMessCode: 'INVALID_BOOK_DELETE_REQUEST',
+				data: null,
+			});
+		}
+
+		const index = books.findIndex(book => book.id === data.id && !book.isDeleted);
+		if (index < 0) {
+			return HttpResponse.json<IResponseBody<IBook | null>>({
+				success: false,
+				returnMess: '삭제할 도서를 찾을 수 없습니다.',
+				returnMessCode: 'BOOK_NOT_FOUND',
+				data: null,
+			});
+		}
+
+		if (getBookOutstandingQuantity(data.id, loans) > 0) {
+			return HttpResponse.json<IResponseBody<IBook | null>>({
+				success: false,
+				returnMess: '미반납 대출이 있는 도서는 삭제할 수 없습니다.',
+				returnMessCode: 'BOOK_HAS_OUTSTANDING_LOANS',
+				data: null,
+			});
+		}
+
+		books[index] = {
+			...books[index],
+			isDeleted: true,
+		};
+		return HttpResponse.json<IResponseBody<IBook>>({
+			success: true,
+			returnMess: '',
+			returnMessCode: 0,
+			data: books[index],
 		});
 	}),
 ];

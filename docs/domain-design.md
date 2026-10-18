@@ -4,7 +4,7 @@
 
 - 작성일: 2026-10-14
 - 설계 상태: 도서 정책 6개는 사용자 합의로 확정했다. 나머지는 정책 결정표에 따라 미확정 초안으로 유지한다.
-- 구현 상태: Book 상수·타입·목록·등록 계약과 고정 Mock 데이터·재고 계산을 준비했다. 도서 목록·등록 HTTP 핸들러, Repository·Service·화면을 연결했다. 도서 수정·삭제와 회원·대출 업무는 미구현이다. 학습용 공지글 CRUD와 공통 기반은 구현되어 있다.
+- 구현 상태: 도서 목록·등록·수정·논리 삭제의 HTTP 핸들러, Repository·Service·화면과 고정 Mock 데이터·재고 계산을 연결했다. 회원·대출 업무는 미구현이다. 학습용 공지글 CRUD와 공통 기반은 구현되어 있다.
 - 기술 구조와 파일 배치: [아키텍처 문서](architecture.md)
 - 진행 상태와 작업 순서: [작업계획서](https://docs.google.com/spreadsheets/d/1aM7rmOxYLrcv7QVLfTQi9k1BrxhbCrhj/edit?gid=1515674481)
 
@@ -95,6 +95,15 @@ availableQuantity = totalQuantity − 미반납 수량
 - 보유 수량은 해당 도서의 미반납·미취소 대출 수량 이상이어야 한다. 그렇지 않으면 `BOOK_QUANTITY_BELOW_OUTSTANDING` 실패 응답이며 데이터는 변경하지 않는다.
 - 형식이 잘못된 요청은 `INVALID_BOOK_UPDATE_REQUEST` 실패 응답이다.
 - 성공 후 목록 Query를 무효화한다. 목록의 가용 수량과 수정 제한은 같은 미반납 수량 계산 함수를 사용한다.
+
+### 삭제 API 계약
+
+`POST /v2/Lib/Book/Delete/Update`를 사용한다. `IBookDelete`는 양의 안전한 정수 ID만 받는다. 실제 데이터는 삭제하지 않고 `isDeleted: true`로 변경해 대출 이력을 보존한다.
+
+- 삭제되지 않은 대상 도서만 삭제할 수 있다. 없는 ID나 이미 삭제된 대상은 `BOOK_NOT_FOUND` 실패 응답이다.
+- 미반납·미취소 대출이 한 건이라도 있으면 `BOOK_HAS_OUTSTANDING_LOANS` 실패 응답이며 데이터는 변경하지 않는다.
+- 형식이 잘못된 요청은 `INVALID_BOOK_DELETE_REQUEST` 실패 응답이다.
+- 성공 후 목록 Query 접두어를 무효화한다. 목록 API는 논리 삭제된 도서를 계속 제외한다.
 
 ### 목록 API 계약
 

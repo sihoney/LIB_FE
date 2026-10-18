@@ -22,8 +22,9 @@ interface IModalUpdateBookProps {
 	onClose: () => void;
 }
 
+// 등록 모달과 반복되는 입력 처리를 확인하는 단계입니다.
+// 다음 공통화는 수정 완료 후 비교해 결정합니다.
 const ModalUpdateBook = ({ open, data, onClose }: IModalUpdateBookProps) => {
-	// 등록 모달과 반복되는 입력 처리를 확인하는 단계입니다. 다음 공통화는 수정 완료 후 비교해 결정합니다.
 	const [values, setValues] = useState({
 		title: data.title,
 		author: data.author,
@@ -36,7 +37,9 @@ const ModalUpdateBook = ({ open, data, onClose }: IModalUpdateBookProps) => {
 		category: '',
 		totalQuantity: '',
 	});
+
 	const mutation = services.bookService.usePatchBook();
+
 	const submittingRef = useRef(false);
 
 	const handleClose = () => {
@@ -54,10 +57,13 @@ const ModalUpdateBook = ({ open, data, onClose }: IModalUpdateBookProps) => {
 
 	const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
+
 		if (submittingRef.current) return;
+
 		const title = values.title.trim();
 		const author = values.author.trim();
 		const totalQuantity = Number(values.totalQuantity);
+
 		const nextErrors = {
 			title: !title
 				? '제목을 입력해 주세요.'
@@ -77,6 +83,7 @@ const ModalUpdateBook = ({ open, data, onClose }: IModalUpdateBookProps) => {
 		};
 		setErrors(nextErrors);
 		if (Object.values(nextErrors).some(Boolean)) return;
+
 		submittingRef.current = true;
 		try {
 			await mutation.mutateAsync({

@@ -1,5 +1,6 @@
 import {
 	BOOK_CREATE_META,
+	BOOK_DELETE_META,
 	BOOK_LIST_META,
 	BOOK_MODULE,
 	BOOK_UPDATE_META,
@@ -12,6 +13,7 @@ import type {
 	IBookSearch,
 	IBook,
 	IBookCreate,
+	IBookDelete,
 	IBookUpdate,
 } from '@/src/types/modules/lib/book';
 import type { IRequestBody } from '@/src/types/common/repository';
@@ -50,11 +52,18 @@ export default class BookRepository {
 			body,
 		});
 
-	// patch는 부분 수정 역할 이름이며, MES 규약에 따라 실제 요청은 POST입니다.
+	// patch는 '부분 수정' 역할 이름이며, MES 규약에 따라 실제 요청은 POST입니다.
 	public patchBook = (body: IRequestBody<IBookUpdate>) =>
 		this.httpClient.patch<IBookUpdate, IBook>({
 			url: BOOK_MODULE,
 			meta: BOOK_UPDATE_META,
+			body,
+		});
+
+	public deleteBook = (body: IRequestBody<IBookDelete>) =>
+		this.httpClient.delete<IBookDelete, IBook>({
+			url: BOOK_MODULE,
+			meta: BOOK_DELETE_META,
 			body,
 		});
 }

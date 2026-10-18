@@ -27,6 +27,7 @@ export const getBookOutstandingQuantity = (
 	bookId: number,
 	loans: readonly IMockLoanStockRecord[],
 ): number =>
+	// 해당 도서의 미반납, 미취소 건수 (대충 중인 수량)
 	loans.filter(
 		loan => loan.bookId === bookId && loan.returnedAt === null && loan.cancelledAt === null,
 	).length;

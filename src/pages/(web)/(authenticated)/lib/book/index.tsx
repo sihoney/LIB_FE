@@ -19,6 +19,7 @@ import type { IBookListItem, IBookSearch, TBookCategory } from '@/src/types/modu
 import services from '@/src/services/services';
 import ModalCreateBook from '@/src/pages/(web)/(authenticated)/lib/book/-components/modals/ModalCreateBook';
 import ModalUpdateBook from '@/src/pages/(web)/(authenticated)/lib/book/-components/modals/ModalUpdateBook';
+import ModalDeleteBook from '@/src/pages/(web)/(authenticated)/lib/book/-components/modals/ModalDeleteBook';
 
 const PAGE_SIZE = 10;
 const emptyDraft = {
@@ -37,6 +38,7 @@ const Component = () => {
 	});
 	const [createBook, setCreateBook] = useState(false);
 	const [updateBook, setUpdateBook] = useState<IBookListItem | null>(null);
+	const [deleteBook, setDeleteBook] = useState<IBookListItem | null>(null);
 
 	const query = services.bookService.useGetBookList({
 		data: search.data,
@@ -70,12 +72,14 @@ const Component = () => {
 
 	return (
 		<section>
+			{/* [1] Page Title */}
 			<Typography component='h1' variant='h4' className='mb-4 font-bold'>
 				도서 목록
 			</Typography>
 
+			{/* [2] searchToolBar */}
 			<form onSubmit={handleSearch} className='my-4 flex flex-wrap items-start gap-3'>
-				{/* input 목록 */}
+				{/* [2-1] input 목록 */}
 				<TextField
 					label='제목'
 					size='small'
@@ -113,7 +117,7 @@ const Component = () => {
 					))}
 				</TextField>
 
-				{/* 버튼 목록 */}
+				{/* [2-2] 버튼 목록 */}
 				<Button type='submit' disabled={isBusy}>
 					검색
 				</Button>
@@ -135,9 +139,11 @@ const Component = () => {
 				</Button>
 			</form>
 
+			{/* [3] Modal */}
 			{createBook && (
 				<ModalCreateBook open={createBook} onClose={() => setCreateBook(false)} />
 			)}
+
 			{updateBook && (
 				<ModalUpdateBook
 					key={updateBook.id}
@@ -146,7 +152,11 @@ const Component = () => {
 					onClose={() => setUpdateBook(null)}
 				/>
 			)}
+			{deleteBook && (
+				<ModalDeleteBook open data={deleteBook} onClose={() => setDeleteBook(null)} />
+			)}
 
+			{/* [4] loading, error 처리 */}
 			{isBusy && (
 				<p role='status'>
 					{query.isPlaceholderData
@@ -174,6 +184,7 @@ const Component = () => {
 				</Alert>
 			)}
 
+			{/* [5] Content */}
 			{query.data && (
 				<>
 					<p className='my-3'>
@@ -219,10 +230,19 @@ const Component = () => {
 											>
 												수정
 											</Button>
+											<Button
+												type='button'
+												variant='outlined'
+												disabled={isBusy}
+												onClick={() => setDeleteBook(book)}
+											>
+												삭제
+											</Button>
 										</TableCell>
 									</TableRow>
 								))}
 
+								{/* [5-1] 빈 목록 처리*/}
 								{query.data.data.length === 0 && (
 									<TableRow>
 										<TableCell colSpan={7}>검색 결과가 없습니다.</TableCell>
