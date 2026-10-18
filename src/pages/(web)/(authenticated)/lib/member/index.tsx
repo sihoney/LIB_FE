@@ -5,6 +5,7 @@ import TableLibMembers from '@/src/components/tables/modules/lib/TableLibMembers
 import Button from '@/src/components/ui/buttons/Button';
 import { MEMBER_STATUSES } from '@/src/consts/modules/lib/member';
 import useTableState from '@/src/hooks/common/table/useTableState';
+import ModalCreateMember from '@/src/pages/(web)/(authenticated)/lib/member/-components/modals/ModalCreateMember';
 import services from '@/src/services/services';
 import type { IMemberSearch, IMemberSorting, TMemberStatus } from '@/src/types/modules/lib/member';
 
@@ -18,16 +19,19 @@ const emptyDraft = {
 
 const Component = () => {
 	const [draft, setDraft] = useState(emptyDraft);
+	const [createMember, setCreateMember] = useState(false);
+
 	const tableState = useTableState<IMemberSearch, IMemberSorting>({
 		take: PAGE_SIZE,
 	});
+
 	const query = services.memberService.useGetMemberList(tableState.requestBody);
 	const totalRecords = query.data?.totalRecords ?? 0;
 	const isBusy = query.isFetching;
 
 	const applySearch = (data: IMemberSearch) => {
 		if (tableState.submit(data)) {
-			// 같은 조건으로 다시 검색해도 조회 의도를 존중해 직접 refetch()
+			// 같은 조건으로 다시 검색해도 조회 의도를 존중해 직접 refetch(), 명시적 재조회
 			void query.refetch();
 		}
 	};
@@ -42,7 +46,8 @@ const Component = () => {
 			phone: draft.phone.trim() || undefined,
 			status: draft.status || undefined,
 		});
-		// trim() || undefined: 빈 문자열을 검색 조건으로 보내지 않기 위해서
+		// trim() || undefined:
+		// - 빈 문자열을 검색 조건으로 보내지 않기 위해서
 	};
 
 	const handleReset = () => {
@@ -98,7 +103,14 @@ const Component = () => {
 				<Button type='button' disabled={isBusy} onClick={handleReset}>
 					초기화
 				</Button>
+				<Button type='button' disabled={isBusy} onClick={() => setCreateMember(true)}>
+					등록
+				</Button>
 			</form>
+
+			{createMember && (
+				<ModalCreateMember open={createMember} onClose={() => setCreateMember(false)} />
+			)}
 
 			{query.isLoading && <p role='status'>회원 목록을 불러오고 있습니다.</p>}
 			{isBusy && !query.isLoading && (
@@ -122,8 +134,9 @@ const Component = () => {
 
 			{/*
 				헤더 클릭은 TableLibMembers → 공통 Table → MRT의 onSortingChange를 거쳐
-				tableState.setSorting을 갱신한다. 정렬·페이지 상태와 API requestBody 변환은
-				Page가 아닌 useTableState가 담당한다.
+				tableState.setSorting을 갱신한다.
+
+				정렬·페이지 상태와 API requestBody 변환은 Page가 아닌 useTableState가 담당한다.
 			*/}
 			<TableLibMembers
 				tableState={tableState}

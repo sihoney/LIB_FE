@@ -1,23 +1,34 @@
 import { ENV_API_BASE_URL } from '@/src/consts/common/envKeys';
 import {
 	MEMBER_LIST_META,
+	MEMBER_CREATE_META,
 	MEMBER_MODULE,
+	MEMBER_NAME_MAX_LENGTH,
+	MEMBER_PHONE_MAX_LENGTH,
+	MEMBER_EMAIL_MAX_LENGTH,
 	MEMBER_SORT_COLUMNS,
 	MEMBER_STATUSES,
 } from '@/src/consts/modules/lib/member';
 import { members } from '@/src/mocks/data/modules/lib/members';
 import type {
 	IMemberListItem,
+	IMember,
+	IMemberCreate,
 	IMemberListRequest,
 	IMemberListResponse,
 	IMemberSorting,
 	TMemberSortColumn,
 } from '@/src/types/modules/lib/member';
 import { delay, http, HttpResponse } from 'msw';
+import type { IResponseBody } from '@/src/types/common/repository';
 
 const apiBase = new URL(`${ENV_API_BASE_URL.replace(/\/$/, '')}/`, window.location.origin);
 const endpoint = new URL(
 	`v2/${MEMBER_MODULE}/${MEMBER_LIST_META.signature}/${MEMBER_LIST_META.functionCode}/GetData`,
+	apiBase,
+).href;
+const createEndpoint = new URL(
+	`v2/${MEMBER_MODULE}/${MEMBER_CREATE_META.signature}/${MEMBER_CREATE_META.functionCode}/Update`,
 	apiBase,
 ).href;
 
@@ -76,6 +87,25 @@ const isMemberListRequest = (value: unknown): value is IMemberListRequest => {
 	);
 };
 
+const getMemberCreateData = (value: unknown): IMemberCreate | null => {
+	if (!isRecord(value) || !isRecord(value.data)) return null;
+	const { name, phone, email } = value.data;
+	if (typeof name !== 'string' || typeof phone !== 'string' || typeof email !== 'string')
+		return null;
+	const data = { name: name.trim(), phone: phone.trim(), email: email.trim() };
+	if (
+		!data.name ||
+		data.name.length > MEMBER_NAME_MAX_LENGTH ||
+		!data.phone ||
+		data.phone.length > MEMBER_PHONE_MAX_LENGTH ||
+		!data.email ||
+		data.email.length > MEMBER_EMAIL_MAX_LENGTH ||
+		!/^\S+@\S+\.\S+$/.test(data.email)
+	)
+		return null;
+	return data;
+};
+
 // compareMemberListItems: 정렬 순서를 계산
 const compareMemberListItems = (
 	left: IMemberListItem,
@@ -131,6 +161,35 @@ export const memberHandlers = [
 			returnMessCode: 0,
 			data,
 			totalRecords: listItems.length,
+		});
+	}),
+
+	http.post(createEndpoint, async ({ request }) => {
+		const data = getMemberCreateData(await request.json().catch(() => undefined));
+		await delay(350);
+		if (!data) {
+			return HttpResponse.json<IResponseBody<IMember | null>>({
+				success: false,
+				returnMess: '이름, 연락처, 이메일을 확인해 주세요.',
+				returnMessCode: 'INVALID_MEMBER_CREATE_REQUEST',
+				data: null,
+			});
+		}
+		const member: IMember = {
+			id: Math.max(0, ...members.map(item => item.id)) + 1,
+			// sys 인증이 아직 없으므로 Mock에서만 임시 계정 연결 키를 만든다.
+			accountId: Math.max(0, ...members.map(item => item.accountId)) + 1,
+			...data,
+			status: 'ACTIVE',
+			joinedAt: new Date().toISOString(),
+			withdrawnAt: null,
+		};
+		members.push(member);
+		return HttpResponse.json<IResponseBody<IMember>>({
+			success: true,
+			returnMess: '',
+			returnMessCode: 0,
+			data: member,
 		});
 	}),
 ];

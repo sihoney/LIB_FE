@@ -2,6 +2,8 @@ import type { MEMBER_SORT_COLUMNS, MEMBER_STATUSES } from '@/src/consts/modules/
 import type { IRequestBody, IResponseBody, ISorting } from '@/src/types/common/repository';
 
 export type TMemberStatus = (typeof MEMBER_STATUSES)[number];
+
+// TMemberSortColumn: 정렬 데이터의 타입
 export type TMemberSortColumn = (typeof MEMBER_SORT_COLUMNS)[number];
 
 // 계정 인증 계약은 sys에서 확정한다. Member는 연결 키만 보관한다.
@@ -23,6 +25,13 @@ export interface IMemberSearch {
 	name?: string;
 	phone?: string;
 	status?: TMemberStatus;
+}
+
+// 계정 연결은 sys 인증 구현에서 확정한다. 회원 등록 단계에서는 업무 정보만 받는다.
+export interface IMemberCreate {
+	name: string;
+	phone: string;
+	email: string;
 }
 
 // '정렬 가능한 컬럼'을 제한하는 타입

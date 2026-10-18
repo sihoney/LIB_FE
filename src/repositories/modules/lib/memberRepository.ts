@@ -1,11 +1,18 @@
-import { MEMBER_LIST_META, MEMBER_MODULE } from '@/src/consts/modules/lib/member';
+import {
+	MEMBER_CREATE_META,
+	MEMBER_LIST_META,
+	MEMBER_MODULE,
+} from '@/src/consts/modules/lib/member';
 import type HttpClient from '@/src/networks/httpClient';
 import type {
 	IMemberListItem,
 	IMemberListRequest,
 	IMemberListResponse,
 	IMemberSearch,
+	IMember,
+	IMemberCreate,
 } from '@/src/types/modules/lib/member';
+import type { IRequestBody } from '@/src/types/common/repository';
 
 export default class MemberRepository {
 	constructor(private readonly httpClient: HttpClient) {}
@@ -33,4 +40,11 @@ export default class MemberRepository {
 
 		return { ...response, totalRecords };
 	};
+
+	public postMember = (body: IRequestBody<IMemberCreate>) =>
+		this.httpClient.post<IMemberCreate, IMember>({
+			url: MEMBER_MODULE,
+			meta: MEMBER_CREATE_META,
+			body,
+		});
 }

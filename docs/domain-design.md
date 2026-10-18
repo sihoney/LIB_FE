@@ -4,7 +4,7 @@
 
 - 작성일: 2026-10-14
 - 설계 상태: 도서 정책 6개는 사용자 합의로 확정했다. 나머지는 정책 결정표에 따라 미확정 초안으로 유지한다.
-- 구현 상태: 도서 목록·등록·수정·논리 삭제의 HTTP 핸들러, Repository·Service·화면과 고정 Mock 데이터·재고 계산을 연결했다. 회원 목록의 타입·고정 Mock 데이터·HTTP 핸들러, Repository·Service와 검색·페이지·사용자 지정 정렬 화면을 구현했다. 회원 변경 기능은 후속 단계다. 대출 업무는 미구현이다. 학습용 공지글 CRUD와 공통 기반은 구현되어 있다.
+- 구현 상태: 도서 목록·등록·수정·논리 삭제의 HTTP 핸들러, Repository·Service·화면과 고정 Mock 데이터·재고 계산을 연결했다. 회원 목록과 등록의 타입·MSW·Repository·Service·화면을 구현했다. 회원 수정·탈퇴와 대출 업무는 후속 단계다. 학습용 공지글 CRUD와 공통 기반은 구현되어 있다.
 - 기술 구조와 파일 배치: [아키텍처 문서](architecture.md)
 - 진행 상태와 작업 순서: [작업계획서](https://docs.google.com/spreadsheets/d/1aM7rmOxYLrcv7QVLfTQi9k1BrxhbCrhj/edit?gid=1515674481)
 
