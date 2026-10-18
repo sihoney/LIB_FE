@@ -458,7 +458,7 @@ ButtonIcon·Icon은 MES 래퍼를 사용하며 icon 매핑에는 사이드바 �
 
 ## 27. 도서 목록 사용자 지정 정렬
 
-- 2026-10-18: MES_FE의 `useTableState`처럼 정렬 상태는 도서 목록 페이지의 로컬 state로 관리한다. 공통 Table과 `useTableState`는 회원 목록 등에서 같은 책임이 반복된 뒤 도입 여부를 결정한다.
+- 2026-10-18: Book과 Member 목록에서 검색·페이지·정렬 책임이 반복된 것을 확인해, MES_FE와 같은 이름의 최소 `useTableState`와 공통 `Table`을 도입했다. `useTableState`는 `requestBody`, `pagination`, `sorting`, `submit`, `resetState`를 제공하고, `Table`은 MRT의 서버 페이징·정렬 상태를 연결한다. `TableLibMembers`는 MES의 `TableUsrUsers`처럼 회원 컬럼만 정의하며, Member Page는 `useTableState → MemberService → TableLibMembers`로 조립한다. 개인화·컬럼 필터·차트는 제외한다.
 - MUI `TableSortLabel`의 클릭은 제목·저자·분류·보유 수량·가용 수량을 `없음 → ASC → DESC → 없음` 순서로 바꾼다. 변경 시 첫 페이지로 이동하며, 새 검색·초기화는 MES의 `submit`처럼 정렬을 해제한다.
 - 요청은 MES 공통 `sortings` 계약의 `{ columName, typeSorting }` 배열을 사용한다. Query key에는 요청 본문 전체가 들어가므로 정렬 조건별 목록 캐시는 분리된다.
 - MSW는 계산된 가용 수량까지 포함한 목록 DTO를 정렬한 뒤 페이징한다. 동률은 ID 오름차순으로 고정해 페이지 사이의 순서가 흔들리지 않게 한다. 허용하지 않은 정렬 필드·방향·중복 열은 `INVALID_BOOK_LIST_REQUEST`로 거부한다.

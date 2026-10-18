@@ -1,30 +1,15 @@
-import { useState, type FormEvent } from 'react';
+import { Alert, MenuItem, TextField, Typography } from '@mui/material';
 import { createFileRoute } from '@tanstack/react-router';
-import {
-	Alert,
-	MenuItem,
-	Pagination,
-	Table,
-	TableBody,
-	TableCell,
-	TableContainer,
-	TableHead,
-	TableRow,
-	TableSortLabel,
-	TextField,
-	Typography,
-} from '@mui/material';
+import { useState, type FormEvent } from 'react';
+import TableLibMembers from '@/src/components/tables/modules/lib/TableLibMembers';
 import Button from '@/src/components/ui/buttons/Button';
 import { MEMBER_STATUSES } from '@/src/consts/modules/lib/member';
+import useTableState from '@/src/hooks/common/table/useTableState';
 import services from '@/src/services/services';
-import type {
-	IMemberSearch,
-	IMemberSorting,
-	TMemberSortColumn,
-	TMemberStatus,
-} from '@/src/types/modules/lib/member';
+import type { IMemberSearch, IMemberSorting, TMemberStatus } from '@/src/types/modules/lib/member';
 
 const PAGE_SIZE = 10;
+
 const emptyDraft = {
 	name: '',
 	phone: '',
@@ -33,53 +18,23 @@ const emptyDraft = {
 
 const Component = () => {
 	const [draft, setDraft] = useState(emptyDraft);
-	const [search, setSearch] = useState<{
-		data: IMemberSearch;
-		pageIndex: number;
-		sortings: IMemberSorting[];
-	}>({
-		data: {},
-		pageIndex: 0,
-		sortings: [],
-	});
-
-	const query = services.memberService.useGetMemberList({
-		data: search.data,
-		skip: search.pageIndex * PAGE_SIZE,
+	const tableState = useTableState<IMemberSearch, IMemberSorting>({
 		take: PAGE_SIZE,
-		sortings: search.sortings,
 	});
+	const query = services.memberService.useGetMemberList(tableState.requestBody);
 	const totalRecords = query.data?.totalRecords ?? 0;
-	const pageCount = Math.max(1, Math.ceil(totalRecords / PAGE_SIZE));
 	const isBusy = query.isFetching;
 
 	const applySearch = (data: IMemberSearch) => {
-		const sameConditions =
-			search.data.name === data.name &&
-			search.data.phone === data.phone &&
-			search.data.status === data.status;
-
-		if (sameConditions && search.pageIndex === 0 && search.sortings.length === 0)
-			void query.refetch(); // '같은 조건으로 다시 검색' 의도 존중 -> 직접 refetch()
-		else setSearch({ data, pageIndex: 0, sortings: [] }); // 첫 페이지로 변경, queryKey 변경(queryFn 호출)
-	};
-
-	const handleSort = (column: TMemberSortColumn) => {
-		if (isBusy) return;
-
-		const current = search.sortings[0];
-		const nextSortings: IMemberSorting[] =
-			current?.columName !== column
-				? [{ columName: column, typeSorting: 'ASC' }]
-				: current.typeSorting === 'ASC'
-					? [{ columName: column, typeSorting: 'DESC' }]
-					: [];
-
-		setSearch(previous => ({ ...previous, pageIndex: 0, sortings: nextSortings }));
+		if (tableState.submit(data)) {
+			// 같은 조건으로 다시 검색해도 조회 의도를 존중해 직접 refetch()
+			void query.refetch();
+		}
 	};
 
 	const handleSearch = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
+
 		if (isBusy) return;
 
 		applySearch({
@@ -87,19 +42,25 @@ const Component = () => {
 			phone: draft.phone.trim() || undefined,
 			status: draft.status || undefined,
 		});
-		// trim() || undefined: 빈 문자열을 검색 조건을 보내지 않기 위해서
+		// trim() || undefined: 빈 문자열을 검색 조건으로 보내지 않기 위해서
+	};
+
+	const handleReset = () => {
+		if (isBusy) return;
+
+		setDraft(emptyDraft);
+		applySearch({});
 	};
 
 	return (
 		<section>
-			<Typography component='h1' variant='h4' className='mb-4 font-bold'>
+			<Typography component='h1' variant='h4' className='mb-6'>
 				회원 목록
 			</Typography>
 
-			<form onSubmit={handleSearch} className='my-4 flex flex-wrap items-start gap-3'>
+			<form className='mb-6 flex flex-wrap items-end gap-3' onSubmit={handleSearch}>
 				<TextField
 					label='이름'
-					size='small'
 					value={draft.name}
 					onChange={event =>
 						setDraft(previous => ({ ...previous, name: event.target.value }))
@@ -107,7 +68,6 @@ const Component = () => {
 				/>
 				<TextField
 					label='연락처'
-					size='small'
 					value={draft.phone}
 					onChange={event =>
 						setDraft(previous => ({ ...previous, phone: event.target.value }))
@@ -116,8 +76,6 @@ const Component = () => {
 				<TextField
 					select
 					label='상태'
-					size='small'
-					className='min-w-32'
 					value={draft.status}
 					onChange={event =>
 						setDraft(previous => ({
@@ -125,6 +83,7 @@ const Component = () => {
 							status: event.target.value as TMemberStatus | '',
 						}))
 					}
+					className='min-w-32'
 				>
 					<MenuItem value=''>전체</MenuItem>
 					{MEMBER_STATUSES.map(status => (
@@ -136,14 +95,7 @@ const Component = () => {
 				<Button type='submit' disabled={isBusy}>
 					검색
 				</Button>
-				<Button
-					type='button'
-					disabled={isBusy}
-					onClick={() => {
-						setDraft(emptyDraft);
-						applySearch({});
-					}}
-				>
+				<Button type='button' disabled={isBusy} onClick={handleReset}>
 					초기화
 				</Button>
 			</form>
@@ -152,10 +104,10 @@ const Component = () => {
 			{isBusy && !query.isLoading && (
 				<p role='status'>이전 조회 결과를 표시하며 회원 목록을 갱신하고 있습니다.</p>
 			)}
-
 			{query.isError && (
 				<Alert
 					severity='error'
+					className='mb-4'
 					action={
 						<Button type='button' onClick={() => void query.refetch()}>
 							다시 시도
@@ -166,94 +118,23 @@ const Component = () => {
 				</Alert>
 			)}
 
-			{query.data && (
-				<>
-					<p className='my-3'>전체 {totalRecords}건</p>
-					<TableContainer>
-						<Table aria-label='회원 목록' size='small'>
-							<TableHead>
-								<TableRow>
-									{(
-										[
-											['이름', 'name'],
-											['연락처', 'phone'],
-											['이메일', 'email'],
-											['상태', 'status'],
-											['가입일', 'joinedAt'],
-										] as const
-									).map(([label, column]) => {
-										const sorting = search.sortings.find(
-											item => item.columName === column,
-										);
-										const direction =
-											sorting?.typeSorting === 'DESC' ? 'desc' : 'asc';
+			<p className='my-3'>전체 {totalRecords}건</p>
 
-										return (
-											<TableCell
-												key={column}
-												sortDirection={sorting ? direction : false}
-											>
-												<TableSortLabel
-													active={!!sorting}
-													direction={direction}
-													disabled={isBusy}
-													onClick={() => handleSort(column)}
-												>
-													{label}
-												</TableSortLabel>
-											</TableCell>
-										);
-									})}
-									<TableCell>탈퇴일</TableCell>
-								</TableRow>
-							</TableHead>
-							<TableBody>
-								{query.data.data.map(member => (
-									<TableRow key={member.id}>
-										<TableCell component='th' scope='row'>
-											{member.name}
-										</TableCell>
-										<TableCell>{member.phone}</TableCell>
-										<TableCell>{member.email}</TableCell>
-										<TableCell>
-											{member.status === 'ACTIVE' ? '정상' : '탈퇴'}
-										</TableCell>
-										<TableCell>{member.joinedAt.slice(0, 10)}</TableCell>
-										<TableCell>
-											{member.withdrawnAt?.slice(0, 10) ?? '-'}
-										</TableCell>
-									</TableRow>
-								))}
-								{query.data.data.length === 0 && (
-									<TableRow>
-										<TableCell colSpan={6}>등록된 회원이 없습니다.</TableCell>
-									</TableRow>
-								)}
-							</TableBody>
-						</Table>
-					</TableContainer>
-					<Pagination
-						className='mt-4'
-						count={pageCount}
-						page={search.pageIndex + 1}
-						disabled={isBusy || totalRecords === 0}
-						onChange={(_, page) =>
-							setSearch(previous => ({ ...previous, pageIndex: page - 1 }))
-						}
-						getItemAriaLabel={(type, page) =>
-							type === 'page'
-								? `${page}페이지`
-								: type === 'next'
-									? '다음 페이지'
-									: type === 'previous'
-										? '이전 페이지'
-										: type === 'first'
-											? '첫 페이지'
-											: '마지막 페이지'
-						}
-					/>
-				</>
-			)}
+			{/*
+				헤더 클릭은 TableLibMembers → 공통 Table → MRT의 onSortingChange를 거쳐
+				tableState.setSorting을 갱신한다. 정렬·페이지 상태와 API requestBody 변환은
+				Page가 아닌 useTableState가 담당한다.
+			*/}
+			<TableLibMembers
+				tableState={tableState}
+				data={query.data?.data ?? []}
+				rowCount={totalRecords}
+				state={{
+					isLoading: query.isLoading,
+					showProgressBars: query.isFetching,
+				}}
+				getRowId={member => String(member.id)}
+			/>
 		</section>
 	);
 };
