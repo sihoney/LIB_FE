@@ -10,12 +10,19 @@ import {
 	TableContainer,
 	TableHead,
 	TableRow,
+	TableSortLabel,
 	TextField,
 	Typography,
 } from '@mui/material';
 import Button from '@/src/components/ui/buttons/Button';
 import { BOOK_CATEGORIES } from '@/src/consts/modules/lib/book';
-import type { IBookListItem, IBookSearch, TBookCategory } from '@/src/types/modules/lib/book';
+import type {
+	IBookListItem,
+	IBookSearch,
+	IBookSorting,
+	TBookCategory,
+	TBookSortColumn,
+} from '@/src/types/modules/lib/book';
 import services from '@/src/services/services';
 import ModalCreateBook from '@/src/pages/(web)/(authenticated)/lib/book/-components/modals/ModalCreateBook';
 import ModalUpdateBook from '@/src/pages/(web)/(authenticated)/lib/book/-components/modals/ModalUpdateBook';
@@ -32,9 +39,14 @@ const Component = () => {
 	// MES의 검색 폼 → 적용 조건 → requestBody 흐름을 먼저 페이지에서 구현합니다.
 	// 일반 Outlet이므로 다른 화면으로 이동 후 돌아오면 로컬 상태는 초기화됩니다.
 	const [draft, setDraft] = useState(emptyDraft);
-	const [search, setSearch] = useState<{ data: IBookSearch; pageIndex: number }>({
+	const [search, setSearch] = useState<{
+		data: IBookSearch;
+		pageIndex: number;
+		sortings: IBookSorting[];
+	}>({
 		data: {},
 		pageIndex: 0,
+		sortings: [],
 	});
 	const [createBook, setCreateBook] = useState(false);
 	const [updateBook, setUpdateBook] = useState<IBookListItem | null>(null);
@@ -44,6 +56,7 @@ const Component = () => {
 		data: search.data,
 		skip: search.pageIndex * PAGE_SIZE,
 		take: PAGE_SIZE,
+		sortings: search.sortings,
 	});
 	const totalRecords = query.data?.totalRecords ?? 0;
 	const pageCount = Math.max(1, Math.ceil(totalRecords / PAGE_SIZE));
@@ -55,8 +68,20 @@ const Component = () => {
 			search.data.author === data.author &&
 			search.data.category === data.category;
 
-		if (sameConditions && search.pageIndex === 0) void query.refetch();
-		else setSearch({ data, pageIndex: 0 });
+		if (sameConditions && search.pageIndex === 0 && search.sortings.length === 0)
+			void query.refetch();
+		else setSearch({ data, pageIndex: 0, sortings: [] });
+	};
+	const handleSort = (column: TBookSortColumn) => {
+		if (isBusy) return;
+		const current = search.sortings[0];
+		const nextSortings: IBookSorting[] =
+			current?.columName !== column
+				? [{ columName: column, typeSorting: 'ASC' }]
+				: current.typeSorting === 'ASC'
+					? [{ columName: column, typeSorting: 'DESC' }]
+					: [];
+		setSearch(previous => ({ ...previous, pageIndex: 0, sortings: nextSortings }));
 	};
 	const handleSearch = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
@@ -195,17 +220,38 @@ const Component = () => {
 						<Table aria-label='도서 목록' size='small'>
 							<TableHead>
 								<TableRow>
-									{[
-										'제목',
-										'저자',
-										'분류',
-										'보유 수량',
-										'가용 수량',
-										'대출 가능 여부',
-										'관리',
-									].map(label => (
-										<TableCell key={label}>{label}</TableCell>
-									))}
+									{(
+										[
+											['제목', 'title'],
+											['저자', 'author'],
+											['분류', 'category'],
+											['보유 수량', 'totalQuantity'],
+											['가용 수량', 'availableQuantity'],
+										] as const
+									).map(([label, column]) => {
+										const sorting = search.sortings.find(
+											item => item.columName === column,
+										);
+										const direction =
+											sorting?.typeSorting === 'DESC' ? 'desc' : 'asc';
+										return (
+											<TableCell
+												key={column}
+												sortDirection={sorting ? direction : false}
+											>
+												<TableSortLabel
+													active={!!sorting}
+													direction={direction}
+													disabled={isBusy}
+													onClick={() => handleSort(column)}
+												>
+													{label}
+												</TableSortLabel>
+											</TableCell>
+										);
+									})}
+									<TableCell>대출 가능 여부</TableCell>
+									<TableCell>관리</TableCell>
 								</TableRow>
 							</TableHead>
 							<TableBody>

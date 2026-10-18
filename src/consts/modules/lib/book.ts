@@ -8,6 +8,14 @@ export const BOOK_CATEGORIES = {
 export const BOOK_TITLE_MAX_LENGTH = 200;
 export const BOOK_AUTHOR_MAX_LENGTH = 100;
 
+export const BOOK_SORT_COLUMNS = [
+	'title',
+	'author',
+	'category',
+	'totalQuantity',
+	'availableQuantity',
+] as const;
+
 export const BOOK_MODULE = 'Lib';
 
 export const BOOK_LIST_META = {

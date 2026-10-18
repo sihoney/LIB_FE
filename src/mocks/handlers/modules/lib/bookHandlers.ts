@@ -6,6 +6,7 @@ import {
 	BOOK_DELETE_META,
 	BOOK_LIST_META,
 	BOOK_MODULE,
+	BOOK_SORT_COLUMNS,
 	BOOK_TITLE_MAX_LENGTH,
 	BOOK_UPDATE_META,
 } from '@/src/consts/modules/lib/book';
@@ -19,8 +20,11 @@ import type {
 	IBook,
 	IBookCreate,
 	IBookDelete,
+	IBookListItem,
 	IBookListRequest,
 	IBookListResponse,
+	IBookSorting,
+	TBookSortColumn,
 	IBookUpdate,
 } from '@/src/types/modules/lib/book';
 import type { IResponseBody } from '@/src/types/common/repository';
@@ -51,6 +55,27 @@ const deleteEndpoint = new URL(
 const isRecord = (value: unknown): value is Record<string, unknown> =>
 	typeof value === 'object' && value !== null && !Array.isArray(value);
 
+const bookSortColumns = new Set<TBookSortColumn>(BOOK_SORT_COLUMNS);
+
+const isBookSortings = (value: unknown): value is IBookSorting[] => {
+	if (value === undefined) return true;
+	if (!Array.isArray(value)) return false;
+	const columns = new Set<string>();
+	return value.every(sorting => {
+		if (!isRecord(sorting)) return false;
+		const { columName, typeSorting } = sorting;
+		if (
+			typeof columName !== 'string' ||
+			!bookSortColumns.has(columName as TBookSortColumn) ||
+			(typeSorting !== 'ASC' && typeSorting !== 'DESC') ||
+			columns.has(columName)
+		)
+			return false;
+		columns.add(columName);
+		return true;
+	});
+};
+
 // TypeScript 타입과 별개로 HTTP 경계에서 실제 입력을 검사합니다. (서버 입력값 검증)
 const isBookListRequest = (value: unknown): value is IBookListRequest => {
 	if (!isRecord(value)) return false;
@@ -63,6 +88,7 @@ const isBookListRequest = (value: unknown): value is IBookListRequest => {
 		)
 			return false;
 	}
+	if (!isBookSortings(value.sortings)) return false;
 	if (value.data === undefined) return true;
 	if (!isRecord(value.data)) return false;
 
@@ -73,6 +99,24 @@ const isBookListRequest = (value: unknown): value is IBookListRequest => {
 		(category === undefined ||
 			(typeof category === 'string' && Object.hasOwn(BOOK_CATEGORIES, category)))
 	);
+};
+
+const compareBookListItems = (
+	left: IBookListItem,
+	right: IBookListItem,
+	sortings: IBookSorting[],
+) => {
+	for (const sorting of sortings) {
+		const leftValue = left[sorting.columName];
+		const rightValue = right[sorting.columName];
+		const compared =
+			typeof leftValue === 'string' && typeof rightValue === 'string'
+				? leftValue.localeCompare(rightValue)
+				: Number(leftValue) - Number(rightValue);
+		if (compared !== 0) return sorting.typeSorting === 'ASC' ? compared : -compared;
+	}
+
+	return left.id - right.id;
 };
 
 const getBookCreateData = (value: unknown): IBookCreate | null => {
@@ -151,37 +195,38 @@ export const bookHandlers = [
 		const title = body.data?.title?.trim().toLocaleLowerCase() ?? '';
 		const author = body.data?.author?.trim().toLocaleLowerCase() ?? '';
 		const category = body.data?.category;
-		const rows = books
-			.filter(
-				book =>
-					!book.isDeleted &&
-					book.title.toLocaleLowerCase().includes(title) &&
-					book.author.toLocaleLowerCase().includes(author) &&
-					(category === undefined || book.category === category),
-			)
-			.sort((a, b) => a.id - b.id);
+		const rows = books.filter(
+			book =>
+				!book.isDeleted &&
+				book.title.toLocaleLowerCase().includes(title) &&
+				book.author.toLocaleLowerCase().includes(author) &&
+				(category === undefined || book.category === category),
+		);
+
+		// sorting
+		const listItems = rows
+			.map(book => ({
+				id: book.id,
+				title: book.title,
+				author: book.author,
+				category: book.category,
+				totalQuantity: book.totalQuantity,
+				availableQuantity: getBookAvailableQuantity(book, loans),
+			}))
+			.sort((left, right) => compareBookListItems(left, right, body.sortings ?? []));
 
 		// 페이지네이션 처리
 		const skip = body.skip ?? 0;
 		const take = body.take ?? 20;
-		const page = take === 0 ? rows.slice(skip) : rows.slice(skip, skip + take);
+		const data = take === 0 ? listItems.slice(skip) : listItems.slice(skip, skip + take);
 
 		// 저장 정보에서 필요한 필드와 계산한 가용 수량만 목록 DTO로 반환합니다.
-		const data = page.map(book => ({
-			id: book.id,
-			title: book.title,
-			author: book.author,
-			category: book.category,
-			totalQuantity: book.totalQuantity,
-			availableQuantity: getBookAvailableQuantity(book, loans),
-		}));
-
 		return HttpResponse.json<IBookListResponse>({
 			success: true,
 			returnMess: '',
 			returnMessCode: 0,
 			data,
-			totalRecords: rows.length,
+			totalRecords: listItems.length,
 		});
 	}),
 

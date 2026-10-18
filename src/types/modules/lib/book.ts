@@ -1,5 +1,5 @@
-import type { BOOK_CATEGORIES } from '@/src/consts/modules/lib/book';
-import type { IRequestBody, IResponseBody } from '@/src/types/common/repository';
+import type { BOOK_CATEGORIES, BOOK_SORT_COLUMNS } from '@/src/consts/modules/lib/book';
+import type { IRequestBody, IResponseBody, ISorting } from '@/src/types/common/repository';
 
 export type TBookCategory = keyof typeof BOOK_CATEGORIES;
 
@@ -17,6 +17,9 @@ export interface IBook {
 export interface IBookListItem extends Omit<IBook, 'isDeleted'> {
 	availableQuantity: number;
 }
+
+export type TBookSortColumn = (typeof BOOK_SORT_COLUMNS)[number];
+export type IBookSorting = ISorting & { columName: TBookSortColumn };
 
 export interface IBookSearch {
 	title?: string;
@@ -40,7 +43,9 @@ export interface IBookUpdate extends IBookCreate {
 // 삭제는 ID만 전달하고, 실제 데이터는 논리 삭제 상태로 보존합니다.
 export type IBookDelete = Pick<IBook, 'id'>;
 
-export type IBookListRequest = IRequestBody<IBookSearch>;
+export type IBookListRequest = Omit<IRequestBody<IBookSearch>, 'sortings'> & {
+	sortings?: IBookSorting[];
+};
 
 // 공통 응답에서는 선택값이지만 도서 목록에서는 페이징 전 건수가 필수입니다.
 export type IBookListResponse = IResponseBody<IBookListItem[]> & {
