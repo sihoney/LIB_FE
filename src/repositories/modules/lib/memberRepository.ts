@@ -1,5 +1,6 @@
 import {
 	MEMBER_CREATE_META,
+	MEMBER_UPDATE_META,
 	MEMBER_LIST_META,
 	MEMBER_MODULE,
 } from '@/src/consts/modules/lib/member';
@@ -11,6 +12,7 @@ import type {
 	IMemberSearch,
 	IMember,
 	IMemberCreate,
+	IMemberUpdate,
 } from '@/src/types/modules/lib/member';
 import type { IRequestBody } from '@/src/types/common/repository';
 
@@ -45,6 +47,12 @@ export default class MemberRepository {
 		this.httpClient.post<IMemberCreate, IMember>({
 			url: MEMBER_MODULE,
 			meta: MEMBER_CREATE_META,
+			body,
+		});
+	public patchMember = (body: IRequestBody<IMemberUpdate>) =>
+		this.httpClient.patch<IMemberUpdate, IMember>({
+			url: MEMBER_MODULE,
+			meta: MEMBER_UPDATE_META,
 			body,
 		});
 }

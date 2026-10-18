@@ -2,10 +2,15 @@ import {
 	MEMBER_CREATE_META,
 	MEMBER_LIST_META,
 	MEMBER_MODULE,
+	MEMBER_UPDATE_META,
 } from '@/src/consts/modules/lib/member';
 import { queryClient } from '@/src/contexts/QueryProvider';
 import type MemberRepository from '@/src/repositories/modules/lib/memberRepository';
-import type { IMemberCreate, IMemberListRequest } from '@/src/types/modules/lib/member';
+import type {
+	IMemberCreate,
+	IMemberListRequest,
+	IMemberUpdate,
+} from '@/src/types/modules/lib/member';
 import type { IRequestBody } from '@/src/types/common/repository';
 import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
 
@@ -33,6 +38,24 @@ export default class MemberService {
 			],
 			mutationFn: (body: IRequestBody<IMemberCreate>) =>
 				this.memberRepository.postMember(body),
+			onSuccess: () =>
+				queryClient.invalidateQueries({
+					queryKey: [
+						MEMBER_MODULE,
+						MEMBER_LIST_META.signature,
+						MEMBER_LIST_META.functionCode,
+					],
+				}),
+		});
+	public usePatchMember = () =>
+		useMutation({
+			mutationKey: [
+				MEMBER_MODULE,
+				MEMBER_UPDATE_META.signature,
+				MEMBER_UPDATE_META.functionCode,
+			],
+			mutationFn: (body: IRequestBody<IMemberUpdate>) =>
+				this.memberRepository.patchMember(body),
 			onSuccess: () =>
 				queryClient.invalidateQueries({
 					queryKey: [

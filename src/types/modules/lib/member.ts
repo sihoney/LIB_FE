@@ -33,6 +33,9 @@ export interface IMemberCreate {
 	phone: string;
 	email: string;
 }
+export interface IMemberUpdate extends IMemberCreate {
+	id: number;
+}
 
 // '정렬 가능한 컬럼'을 제한하는 타입
 export type IMemberSorting = ISorting & {

@@ -2,6 +2,7 @@ import { ENV_API_BASE_URL } from '@/src/consts/common/envKeys';
 import {
 	MEMBER_LIST_META,
 	MEMBER_CREATE_META,
+	MEMBER_UPDATE_META,
 	MEMBER_MODULE,
 	MEMBER_NAME_MAX_LENGTH,
 	MEMBER_PHONE_MAX_LENGTH,
@@ -14,6 +15,7 @@ import type {
 	IMemberListItem,
 	IMember,
 	IMemberCreate,
+	IMemberUpdate,
 	IMemberListRequest,
 	IMemberListResponse,
 	IMemberSorting,
@@ -29,6 +31,10 @@ const endpoint = new URL(
 ).href;
 const createEndpoint = new URL(
 	`v2/${MEMBER_MODULE}/${MEMBER_CREATE_META.signature}/${MEMBER_CREATE_META.functionCode}/Update`,
+	apiBase,
+).href;
+const updateEndpoint = new URL(
+	`v2/${MEMBER_MODULE}/${MEMBER_UPDATE_META.signature}/${MEMBER_UPDATE_META.functionCode}/Update`,
 	apiBase,
 ).href;
 
@@ -104,6 +110,18 @@ const getMemberCreateData = (value: unknown): IMemberCreate | null => {
 	)
 		return null;
 	return data;
+};
+const getMemberUpdateData = (value: unknown): IMemberUpdate | null => {
+	if (
+		!isRecord(value) ||
+		!isRecord(value.data) ||
+		typeof value.data.id !== 'number' ||
+		!Number.isSafeInteger(value.data.id) ||
+		value.data.id <= 0
+	)
+		return null;
+	const create = getMemberCreateData(value);
+	return create ? { id: value.data.id, ...create } : null;
 };
 
 // compareMemberListItems: 정렬 순서를 계산
@@ -190,6 +208,32 @@ export const memberHandlers = [
 			returnMess: '',
 			returnMessCode: 0,
 			data: member,
+		});
+	}),
+	http.post(updateEndpoint, async ({ request }) => {
+		const data = getMemberUpdateData(await request.json().catch(() => undefined));
+		await delay(350);
+		if (!data)
+			return HttpResponse.json<IResponseBody<IMember | null>>({
+				success: false,
+				returnMess: '수정할 회원 정보를 확인해 주세요.',
+				returnMessCode: 'INVALID_MEMBER_UPDATE_REQUEST',
+				data: null,
+			});
+		const index = members.findIndex(member => member.id === data.id);
+		if (index < 0)
+			return HttpResponse.json<IResponseBody<IMember | null>>({
+				success: false,
+				returnMess: '수정할 회원을 찾을 수 없습니다.',
+				returnMessCode: 'MEMBER_NOT_FOUND',
+				data: null,
+			});
+		members[index] = { ...members[index], ...data };
+		return HttpResponse.json<IResponseBody<IMember>>({
+			success: true,
+			returnMess: '',
+			returnMessCode: 0,
+			data: members[index],
 		});
 	}),
 ];

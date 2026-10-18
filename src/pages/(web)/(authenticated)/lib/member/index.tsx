@@ -6,8 +6,14 @@ import Button from '@/src/components/ui/buttons/Button';
 import { MEMBER_STATUSES } from '@/src/consts/modules/lib/member';
 import useTableState from '@/src/hooks/common/table/useTableState';
 import ModalCreateMember from '@/src/pages/(web)/(authenticated)/lib/member/-components/modals/ModalCreateMember';
+import ModalUpdateMember from '@/src/pages/(web)/(authenticated)/lib/member/-components/modals/ModalUpdateMember';
 import services from '@/src/services/services';
-import type { IMemberSearch, IMemberSorting, TMemberStatus } from '@/src/types/modules/lib/member';
+import type {
+	IMemberListItem,
+	IMemberSearch,
+	IMemberSorting,
+	TMemberStatus,
+} from '@/src/types/modules/lib/member';
 
 const PAGE_SIZE = 10;
 
@@ -20,6 +26,7 @@ const emptyDraft = {
 const Component = () => {
 	const [draft, setDraft] = useState(emptyDraft);
 	const [createMember, setCreateMember] = useState(false);
+	const [updateMember, setUpdateMember] = useState<IMemberListItem | null>(null);
 
 	const tableState = useTableState<IMemberSearch, IMemberSorting>({
 		take: PAGE_SIZE,
@@ -111,6 +118,9 @@ const Component = () => {
 			{createMember && (
 				<ModalCreateMember open={createMember} onClose={() => setCreateMember(false)} />
 			)}
+			{updateMember && (
+				<ModalUpdateMember open data={updateMember} onClose={() => setUpdateMember(null)} />
+			)}
 
 			{query.isLoading && <p role='status'>회원 목록을 불러오고 있습니다.</p>}
 			{isBusy && !query.isLoading && (
@@ -147,6 +157,8 @@ const Component = () => {
 					showProgressBars: query.isFetching,
 				}}
 				getRowId={member => String(member.id)}
+				disabled={isBusy}
+				onUpdate={setUpdateMember}
 			/>
 		</section>
 	);
