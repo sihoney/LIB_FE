@@ -43,6 +43,8 @@ const Table = <T extends MRT_RowData, U extends object = object>({
 		columns,
 		data,
 		getRowId,
+		// TODO: MUI의 palette.mode와 MRT의 baseBackgroundColor를 동기화한다.
+		// 다크 모드에서 MUI 글자색은 밝지만 MRT 기본 배경은 흰색이어서 대비가 맞지 않는다.
 		manualPagination: true,
 		manualSorting: true,
 		manualFiltering: true,
@@ -53,7 +55,8 @@ const Table = <T extends MRT_RowData, U extends object = object>({
 			isLoading,
 			showProgressBars,
 		},
-		// onPaginationChange, onSortingsChange: 페이지 버튼이나 정렬 헤더가 조작되면, useTableState에게 내용 전달
+		// onPaginationChange, onSortingsChange:
+		// - 페이지 버튼이나 정렬 헤더가 조작되면, useTableState에게 내용 전달
 		onPaginationChange: tableState.setPagination,
 		onSortingChange: tableState.setSorting,
 		paginationDisplayMode: 'pages',

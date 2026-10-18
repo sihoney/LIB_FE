@@ -332,7 +332,7 @@ ButtonIcon·Icon은 MES 래퍼를 사용하며 icon 매핑에는 사이드바 �
 - Service는 MES 공지 목록처럼 keepPreviousData를 사용한다. 이전 결과 표시 중이라는 안내와 페이지 이동 잠금을 연결한다.
 - Mock 데이터는 독립 Faker 인스턴스의 고정 seed로 모듈 초기화 시 생성한다. 기존 공지 3개와 생성 데이터 50개를 사용하며 서버 영속 저장은 아니다.
 - MSW는 제목 부분 일치 검색 후 totalRecords를 계산하고 skip/take를 적용한다. take: 0은 skip 이후 전체 조회다.
-- Repository·HttpClient는 기존 전달 구조를 유지한다. useTableState·TableSearchToolbar·MockRepository 공통화는 후속 TODO다.
+- Repository·HttpClient는 기존 전달 구조를 유지한다. `useTableState`와 공통 `Table`은 Member·Book 목록의 반복을 확인한 뒤 도입했으며, `TableSearchToolbar`·MockRepository 공통화는 후속 TODO다.
 
 ## 17. 공통 검색 구현의 학습용 보존
 
@@ -395,8 +395,8 @@ ButtonIcon·Icon은 MES 래퍼를 사용하며 icon 매핑에는 사이드바 �
 - 2026-10-17: `POST /v2/Lib/Book/GetBookList/GetData`를 MSW → HttpClient → BookRepository → BookService → `/lib/book` 화면에 연결했다. 공지글과 기존 사용자 작성 데이터·재고 계산 함수를 유지한다.
 - 제목·저자 부분 일치와 분류 일치 조건을 AND로 적용한다. 삭제 도서 제외 → 검색 → ID 오름차순 → 전체 건수 → 페이징 순서이며, 가용 수량은 대출 기록으로 계산한다.
 - 잘못된 JSON·검색값·분류·페이징 값은 `INVALID_BOOK_LIST_REQUEST` 실패 응답이다. Repository는 필수 `totalRecords`를 런타임에서 확인한다. 재고 불일치는 서버 오류로 드러낸다.
-- MES_FE의 `useTableState` 흐름을 참고해 입력 중 조건, 적용 조건, 페이지를 로컬 상태로 분리했다. 검색·초기화 시 첫 페이지로 이동하며 같은 조건·첫 페이지의 검색은 재조회한다. 기본 페이지 크기는 10이다.
-- 일반 목록 상태를 URL과 자동 동기화하지 않는다. URL 공유·특정 대상으로 직접 진입해야 하는 조건에 Router를 사용한다. 공통 훅·테이블은 도서 CRUD 등의 반복을 확인한 뒤 추출한다.
+- MES_FE의 `useTableState` 흐름을 참고해 입력 중 조건은 Page의 로컬 state, 적용 조건·페이지·정렬은 공통 훅으로 분리했다. 검색·초기화 시 첫 페이지로 이동하며 같은 조건·첫 페이지의 검색은 재조회한다. 기본 페이지 크기는 10이다.
+- 일반 목록 상태를 URL과 자동 동기화하지 않는다. URL 공유·특정 대상으로 직접 진입해야 하는 조건에 Router를 사용한다. 공통 훅·테이블은 도서 CRUD와 회원 목록의 반복을 확인한 뒤 추출했다.
 - 메뉴·방문 탭에 도서 목록을 연결했다. 일반 Outlet을 사용하므로 화면을 떠났다 돌아오면 로컬 검색·페이지가 초기화된다. KeepAlive, 도서 CRUD, 사용자 지정 정렬은 후속 작업이다.
 - 조회 중 이전 결과 안내, 오류·재시도, 빈 결과, 보유·가용 수량과 대출 가능 여부를 표시한다.
 
@@ -454,12 +454,12 @@ ButtonIcon·Icon은 MES 래퍼를 사용하며 icon 매핑에는 사이드바 �
 ### 작업계획서 상태 변경 제안
 
 - BOOK-03 도서 삭제: 구현·검증 완료로 기록 가능하다.
-- BOOK-05 사용자 지정 정렬은 미착수다. 스프레드시트는 직접 수정하지 않았다.
+- BOOK-05 사용자 지정 정렬은 완료했으며, 도서 목록의 MRT 전환으로 정렬 UI는 공통 `Table`이 담당한다. 스프레드시트는 직접 수정하지 않았다.
 
 ## 27. 도서 목록 사용자 지정 정렬
 
-- 2026-10-18: Book과 Member 목록에서 검색·페이지·정렬 책임이 반복된 것을 확인해, MES_FE와 같은 이름의 최소 `useTableState`와 공통 `Table`을 도입했다. `useTableState`는 `requestBody`, `pagination`, `sorting`, `submit`, `resetState`를 제공하고, `Table`은 MRT의 서버 페이징·정렬 상태를 연결한다. `TableLibMembers`는 MES의 `TableUsrUsers`처럼 회원 컬럼만 정의하며, Member Page는 `useTableState → MemberService → TableLibMembers`로 조립한다. 개인화·컬럼 필터·차트는 제외한다.
-- MUI `TableSortLabel`의 클릭은 제목·저자·분류·보유 수량·가용 수량을 `없음 → ASC → DESC → 없음` 순서로 바꾼다. 변경 시 첫 페이지로 이동하며, 새 검색·초기화는 MES의 `submit`처럼 정렬을 해제한다.
+- 2026-10-18: Book과 Member 목록에서 검색·페이지·정렬 책임이 반복된 것을 확인해, MES_FE와 같은 이름의 최소 `useTableState`와 공통 `Table`을 도입했다. `useTableState`는 `requestBody`, `pagination`, `sorting`, `submit`, `resetState`를 제공하고, `Table`은 MRT의 서버 페이징·정렬 상태를 연결한다. `TableLibMembers`와 `TableLibBooks`는 MES의 `TableUsrUsers`처럼 업무별 컬럼만 정의하며, 각 Page는 `useTableState → Service → TableLibXxx`로 조립한다. 개인화·컬럼 필터·차트는 제외한다.
+- MRT 헤더 클릭은 `없음 → ASC → DESC → 없음` 순서로 제목·저자·분류·보유 수량·가용 수량의 정렬 상태를 바꾼다. 변경 시 첫 페이지로 이동하며, 새 검색·초기화는 MES의 `submit`처럼 정렬을 해제한다.
 - 요청은 MES 공통 `sortings` 계약의 `{ columName, typeSorting }` 배열을 사용한다. Query key에는 요청 본문 전체가 들어가므로 정렬 조건별 목록 캐시는 분리된다.
 - MSW는 계산된 가용 수량까지 포함한 목록 DTO를 정렬한 뒤 페이징한다. 동률은 ID 오름차순으로 고정해 페이지 사이의 순서가 흔들리지 않게 한다. 허용하지 않은 정렬 필드·방향·중복 열은 `INVALID_BOOK_LIST_REQUEST`로 거부한다.
 

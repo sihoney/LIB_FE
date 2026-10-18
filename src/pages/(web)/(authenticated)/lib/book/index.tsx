@@ -1,32 +1,20 @@
-import { useState, type FormEvent } from 'react';
+import { Alert, MenuItem, TextField, Typography } from '@mui/material';
 import { createFileRoute } from '@tanstack/react-router';
-import {
-	Alert,
-	MenuItem,
-	Pagination,
-	Table,
-	TableBody,
-	TableCell,
-	TableContainer,
-	TableHead,
-	TableRow,
-	TableSortLabel,
-	TextField,
-	Typography,
-} from '@mui/material';
+import { useState, type FormEvent } from 'react';
+import TableLibBooks from '@/src/components/tables/modules/lib/TableLibBooks';
 import Button from '@/src/components/ui/buttons/Button';
 import { BOOK_CATEGORIES } from '@/src/consts/modules/lib/book';
+import useTableState from '@/src/hooks/common/table/useTableState';
+import ModalCreateBook from '@/src/pages/(web)/(authenticated)/lib/book/-components/modals/ModalCreateBook';
+import ModalDeleteBook from '@/src/pages/(web)/(authenticated)/lib/book/-components/modals/ModalDeleteBook';
+import ModalUpdateBook from '@/src/pages/(web)/(authenticated)/lib/book/-components/modals/ModalUpdateBook';
+import services from '@/src/services/services';
 import type {
 	IBookListItem,
 	IBookSearch,
 	IBookSorting,
 	TBookCategory,
-	TBookSortColumn,
 } from '@/src/types/modules/lib/book';
-import services from '@/src/services/services';
-import ModalCreateBook from '@/src/pages/(web)/(authenticated)/lib/book/-components/modals/ModalCreateBook';
-import ModalUpdateBook from '@/src/pages/(web)/(authenticated)/lib/book/-components/modals/ModalUpdateBook';
-import ModalDeleteBook from '@/src/pages/(web)/(authenticated)/lib/book/-components/modals/ModalDeleteBook';
 
 const PAGE_SIZE = 10;
 const emptyDraft = {
@@ -36,53 +24,25 @@ const emptyDraft = {
 };
 
 const Component = () => {
-	// MES의 검색 폼 → 적용 조건 → requestBody 흐름을 먼저 페이지에서 구현합니다.
-	// 일반 Outlet이므로 다른 화면으로 이동 후 돌아오면 로컬 상태는 초기화됩니다.
+	// 입력 중인 검색 초안은 Page에, 실제 조회 조건은 useTableState에 둔다.
 	const [draft, setDraft] = useState(emptyDraft);
-	const [search, setSearch] = useState<{
-		data: IBookSearch;
-		pageIndex: number;
-		sortings: IBookSorting[];
-	}>({
-		data: {},
-		pageIndex: 0,
-		sortings: [],
-	});
 	const [createBook, setCreateBook] = useState(false);
 	const [updateBook, setUpdateBook] = useState<IBookListItem | null>(null);
 	const [deleteBook, setDeleteBook] = useState<IBookListItem | null>(null);
-
-	const query = services.bookService.useGetBookList({
-		data: search.data,
-		skip: search.pageIndex * PAGE_SIZE,
+	const tableState = useTableState<IBookSearch, IBookSorting>({
 		take: PAGE_SIZE,
-		sortings: search.sortings,
 	});
+	const query = services.bookService.useGetBookList(tableState.requestBody);
 	const totalRecords = query.data?.totalRecords ?? 0;
-	const pageCount = Math.max(1, Math.ceil(totalRecords / PAGE_SIZE));
 	const isBusy = query.isFetching;
 
 	const applySearch = (data: IBookSearch) => {
-		const sameConditions =
-			search.data.title === data.title &&
-			search.data.author === data.author &&
-			search.data.category === data.category;
-
-		if (sameConditions && search.pageIndex === 0 && search.sortings.length === 0)
+		if (tableState.submit(data)) {
+			// 같은 조건으로 다시 검색해도 조회 의도를 존중해 직접 refetch()
 			void query.refetch();
-		else setSearch({ data, pageIndex: 0, sortings: [] });
+		}
 	};
-	const handleSort = (column: TBookSortColumn) => {
-		if (isBusy) return;
-		const current = search.sortings[0];
-		const nextSortings: IBookSorting[] =
-			current?.columName !== column
-				? [{ columName: column, typeSorting: 'ASC' }]
-				: current.typeSorting === 'ASC'
-					? [{ columName: column, typeSorting: 'DESC' }]
-					: [];
-		setSearch(previous => ({ ...previous, pageIndex: 0, sortings: nextSortings }));
-	};
+
 	const handleSearch = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 
@@ -95,16 +55,20 @@ const Component = () => {
 		});
 	};
 
+	const handleReset = () => {
+		if (isBusy) return;
+
+		setDraft(emptyDraft);
+		applySearch({});
+	};
+
 	return (
 		<section>
-			{/* [1] Page Title */}
 			<Typography component='h1' variant='h4' className='mb-4 font-bold'>
 				도서 목록
 			</Typography>
 
-			{/* [2] searchToolBar */}
 			<form onSubmit={handleSearch} className='my-4 flex flex-wrap items-start gap-3'>
-				{/* [2-1] input 목록 */}
 				<TextField
 					label='제목'
 					size='small'
@@ -142,33 +106,23 @@ const Component = () => {
 					))}
 				</TextField>
 
-				{/* [2-2] 버튼 목록 */}
 				<Button type='submit' disabled={isBusy}>
 					검색
 				</Button>
-				<Button
-					type='button'
-					disabled={isBusy}
-					onClick={() => {
-						setDraft(emptyDraft);
-						applySearch({});
-					}}
-				>
+				<Button type='button' disabled={isBusy} onClick={handleReset}>
 					초기화
 				</Button>
 				<Button type='button' disabled={isBusy} onClick={() => void query.refetch()}>
-					재조회
+					새로고침
 				</Button>
 				<Button type='button' disabled={isBusy} onClick={() => setCreateBook(true)}>
 					등록
 				</Button>
 			</form>
 
-			{/* [3] Modal */}
 			{createBook && (
 				<ModalCreateBook open={createBook} onClose={() => setCreateBook(false)} />
 			)}
-
 			{updateBook && (
 				<ModalUpdateBook
 					key={updateBook.id}
@@ -181,7 +135,6 @@ const Component = () => {
 				<ModalDeleteBook open data={deleteBook} onClose={() => setDeleteBook(null)} />
 			)}
 
-			{/* [4] loading, error 처리 */}
 			{isBusy && (
 				<p role='status'>
 					{query.isPlaceholderData
@@ -189,7 +142,6 @@ const Component = () => {
 						: '도서를 불러오고 있습니다.'}
 				</p>
 			)}
-
 			{query.isError && (
 				<Alert
 					severity='error'
@@ -199,126 +151,34 @@ const Component = () => {
 							disabled={isBusy}
 							onClick={() => void query.refetch()}
 						>
-							재시도
+							다시 시도
 						</Button>
 					}
 				>
 					{query.data
-						? '재조회에 실패했습니다. 이전 조회 결과를 표시합니다.'
+						? '새로고침에 실패했습니다. 이전 조회 결과를 표시합니다.'
 						: '도서 목록을 불러오지 못했습니다.'}
 				</Alert>
 			)}
 
-			{/* [5] Content */}
-			{query.data && (
-				<>
-					<p className='my-3'>
-						{query.isPlaceholderData || query.isError ? '이전 결과' : '검색 결과'}:{' '}
-						{totalRecords}건
-					</p>
-					<TableContainer>
-						<Table aria-label='도서 목록' size='small'>
-							<TableHead>
-								<TableRow>
-									{(
-										[
-											['제목', 'title'],
-											['저자', 'author'],
-											['분류', 'category'],
-											['보유 수량', 'totalQuantity'],
-											['가용 수량', 'availableQuantity'],
-										] as const
-									).map(([label, column]) => {
-										const sorting = search.sortings.find(
-											item => item.columName === column,
-										);
-										const direction =
-											sorting?.typeSorting === 'DESC' ? 'desc' : 'asc';
-										return (
-											<TableCell
-												key={column}
-												sortDirection={sorting ? direction : false}
-											>
-												<TableSortLabel
-													active={!!sorting}
-													direction={direction}
-													disabled={isBusy}
-													onClick={() => handleSort(column)}
-												>
-													{label}
-												</TableSortLabel>
-											</TableCell>
-										);
-									})}
-									<TableCell>대출 가능 여부</TableCell>
-									<TableCell>관리</TableCell>
-								</TableRow>
-							</TableHead>
-							<TableBody>
-								{query.data.data.map(book => (
-									<TableRow key={book.id}>
-										<TableCell component='th' scope='row'>
-											{book.title}
-										</TableCell>
-										<TableCell>{book.author}</TableCell>
-										<TableCell>{BOOK_CATEGORIES[book.category]}</TableCell>
-										<TableCell>{book.totalQuantity}</TableCell>
-										<TableCell>{book.availableQuantity}</TableCell>
-										<TableCell>
-											{book.availableQuantity > 0 ? '대출 가능' : '대출 불가'}
-										</TableCell>
-										<TableCell>
-											<Button
-												type='button'
-												variant='outlined'
-												disabled={isBusy}
-												onClick={() => setUpdateBook(book)}
-											>
-												수정
-											</Button>
-											<Button
-												type='button'
-												variant='outlined'
-												disabled={isBusy}
-												onClick={() => setDeleteBook(book)}
-											>
-												삭제
-											</Button>
-										</TableCell>
-									</TableRow>
-								))}
+			<p className='my-3'>
+				{query.isPlaceholderData || query.isError ? '이전 결과' : '검색 결과'}:{' '}
+				{totalRecords}건
+			</p>
 
-								{/* [5-1] 빈 목록 처리*/}
-								{query.data.data.length === 0 && (
-									<TableRow>
-										<TableCell colSpan={7}>검색 결과가 없습니다.</TableCell>
-									</TableRow>
-								)}
-							</TableBody>
-						</Table>
-					</TableContainer>
-					<Pagination
-						className='mt-4'
-						count={pageCount}
-						page={search.pageIndex + 1}
-						disabled={isBusy || totalRecords === 0}
-						onChange={(_, page) =>
-							setSearch(previous => ({ ...previous, pageIndex: page - 1 }))
-						}
-						getItemAriaLabel={(type, page) =>
-							type === 'page'
-								? `${page}페이지`
-								: type === 'next'
-									? '다음 페이지'
-									: type === 'previous'
-										? '이전 페이지'
-										: type === 'first'
-											? '첫 페이지'
-											: '마지막 페이지'
-						}
-					/>
-				</>
-			)}
+			<TableLibBooks
+				tableState={tableState}
+				data={query.data?.data ?? []}
+				rowCount={totalRecords}
+				state={{
+					isLoading: query.isLoading,
+					showProgressBars: query.isFetching,
+				}}
+				getRowId={book => String(book.id)}
+				disabled={isBusy}
+				onUpdate={setUpdateBook}
+				onDelete={setDeleteBook}
+			/>
 		</section>
 	);
 };
