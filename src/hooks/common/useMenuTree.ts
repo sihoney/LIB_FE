@@ -10,6 +10,12 @@ const menus = [
 		link: linkOptions({ to: '/lib/book' }),
 	},
 	{
+		menuCode: 'members',
+		menuName: '회원 목록',
+		shortName: '회원',
+		link: linkOptions({ to: '/lib/member' }),
+	},
+	{
 		menuCode: 'home',
 		menuName: 'LIB 시작 화면',
 		shortName: '홈',

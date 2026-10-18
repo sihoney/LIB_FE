@@ -4,7 +4,7 @@
 
 - 작성일: 2026-10-14
 - 설계 상태: 도서 정책 6개는 사용자 합의로 확정했다. 나머지는 정책 결정표에 따라 미확정 초안으로 유지한다.
-- 구현 상태: 도서 목록·등록·수정·논리 삭제의 HTTP 핸들러, Repository·Service·화면과 고정 Mock 데이터·재고 계산을 연결했다. 회원·대출 업무는 미구현이다. 학습용 공지글 CRUD와 공통 기반은 구현되어 있다.
+- 구현 상태: 도서 목록·등록·수정·논리 삭제의 HTTP 핸들러, Repository·Service·화면과 고정 Mock 데이터·재고 계산을 연결했다. 회원 목록의 타입·고정 Mock 데이터·HTTP 핸들러, Repository·Service와 검색·페이지·사용자 지정 정렬 화면을 구현했다. 회원 변경 기능은 후속 단계다. 대출 업무는 미구현이다. 학습용 공지글 CRUD와 공통 기반은 구현되어 있다.
 - 기술 구조와 파일 배치: [아키텍처 문서](architecture.md)
 - 진행 상태와 작업 순서: [작업계획서](https://docs.google.com/spreadsheets/d/1aM7rmOxYLrcv7QVLfTQi9k1BrxhbCrhj/edit?gid=1515674481)
 
@@ -178,6 +178,16 @@ availableQuantity = totalQuantity − 미반납 수량
 
 이메일 필수 여부, 연락처 형식·정규화, 입력 길이는 회원 구현 전에 최종 확정한다.
 
+### 목록 조회 (1단계 구현)
+
+`POST /v2/Lib/Member/GetMemberList/GetData`를 사용한다. `MEMBER_MODULE`과 `MEMBER_LIST_META`로 경로를 구성한다.
+
+- 요청: `IMemberListRequest`. `name`, `phone`, `status` 검색과 `skip`, `take`, `sortings`를 받는다.
+- 응답: `IMemberListResponse`. 공통 `IResponseBody<IMemberListItem[]>`를 사용하되 `totalRecords`는 필수다.
+- 목록 DTO는 `accountId`를 제외한다. 계정 인증의 상세 계약은 `modules/sys` 구현 단계에서 확정한다.
+- 탈퇴 회원도 이력 확인을 위해 보존하며, 기본 목록에 포함한다. `status`로 `ACTIVE`와 `WITHDRAWN`을 구분한다.
+- MSW 핸들러는 HTTP 경계에서 요청 형식·정렬 컬럼·중복 정렬을 검사한 뒤 검색, 정렬, 페이징 순서로 응답한다.
+
 ## 5. 대출과 반납 Loan
 
 대출 한 건은 회원 한 명이 도서 한 권을 빌린 기록이다. 같은 도서 두 권을 빌리면 대출 기록도 두 건이다. 반납은 대출 ID로 대상을 식별한다.
@@ -298,7 +308,7 @@ Page / 업무 Component → Service → Repository → HttpClient
 - 계산된 재고·상태·집계는 API 응답으로 제공한다. 도서 목록의 가용 수량을 계산하려고 화면에서 전체 대출 데이터를 가져오지 않는다.
 - 대출·반납·취소 후에는 도서 재고, 대출 목록, 회원 이력, 대시보드 등 영향을 받는 Query를 갱신한다. 정확한 Query key는 구현 시 정의한다.
 
-파일은 `types/modules/lib/book.ts`, `libMember.ts`, `libLoan.ts`와 각 Repository·Service처럼 도메인별로 배치한다. 인증은 `modules/sys`로 분리한다. 목표 파일을 미리 모두 생성하지 않는다.
+파일은 `types/modules/lib/book.ts`, `member.ts`, `loan.ts`와 각 Repository·Service처럼 도메인별로 배치한다. 인증은 `modules/sys`로 분리한다. 목표 파일을 미리 모두 생성하지 않는다.
 
 구현 순서는 도서 목록 → 도서 CRUD → 회원·인증 → 대출·반납 → 현황·회원 화면이다. 공통 테이블·폼·Base 계층은 실제 반복을 확인한 뒤 도입한다. 목록 API 등의 상세 계약은 각 기능을 구현하면서 추가한다.
 
