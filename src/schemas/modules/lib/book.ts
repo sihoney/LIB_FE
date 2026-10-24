@@ -27,3 +27,9 @@ export const schemaCreateBook = z.object({
 });
 
 export interface ISchemaCreateBook extends z.infer<typeof schemaCreateBook> {}
+
+export const schemaUpdateBook = schemaCreateBook.extend({
+	id: z.number().int().positive(),
+});
+
+export interface ISchemaUpdateBook extends z.infer<typeof schemaUpdateBook> {}

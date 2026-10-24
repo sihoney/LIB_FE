@@ -478,3 +478,4 @@ ButtonIcon·Icon은 MES 래퍼를 사용하며 icon 매핑에는 사이드바 �
 - 2026-10-19: 회원 등록에 `schemaCreateMember`와 `useForm`을 적용했다. Zod가 공백 제거·필수값·최대 길이·이메일 형식을 검증하고, 유효한 값만 Service mutation에 전달한다. 모달은 mutation 실패 시 열려 있는 상태와 입력값을 유지하며, 성공한 경우에만 닫힌다.
 - 2026-10-24: MES_FE의 `Modal<T>`, `IModalBaseProps<T>`, `TModalConfirmHandler<T>` 이름과 책임을 최소 범위로 도입했다. `Modal`은 `UseFormReturn`과 `onConfirm`을 받아 제출 성공 뒤 폼을 초기화하고 닫으며, 회원 등록·수정 모달은 입력 필드·스키마·mutation만 제공한다. 회원 수정은 MES처럼 `values`로 선택 행의 값을 폼에 주입하고 `schemaUpdateMember`로 ID를 포함해 검증한다.
 - 2026-10-24: 도서 등록에도 `schemaCreateBook`, `useForm`, 공통 `Modal<T>`을 적용해 회원과 동일한 제출 흐름을 확인했다. 제목·저자는 스키마에서 공백을 제거하고 길이를 검사하며, 분류와 보유 수량도 요청 전에 검증한다. 등록 화면의 미저장 변경 확인은 도서 업무 모달에 남긴다. 보유 수량 수정 제한은 별도 업무 규칙이 있으므로 도서 수정 전환 단계에서 다룬다.
+- 2026-10-24: 도서 수정에 `schemaUpdateBook`, `IModalBaseProps<IBookListItem>`, `useForm`의 `values`를 적용했다. 수정 대상 행이 바뀌면 폼 값을 함께 갱신하며, 제목·저자·분류·수량 형식은 Zod가 검증한다. 대출 중 수량보다 보유 수량을 낮출 수 없는 업무 규칙은 화면에 복제하지 않고 기존 MSW HTTP 경계 검증을 유지한다.
