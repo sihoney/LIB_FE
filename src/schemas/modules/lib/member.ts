@@ -17,3 +17,9 @@ export const schemaCreateMember = z.object({
 });
 
 export interface ISchemaCreateMember extends z.infer<typeof schemaCreateMember> {}
+
+export const schemaUpdateMember = schemaCreateMember.extend({
+	id: z.number().int().positive(),
+});
+
+export interface ISchemaUpdateMember extends z.infer<typeof schemaUpdateMember> {}

@@ -471,8 +471,9 @@ ButtonIcon·Icon은 MES 래퍼를 사용하며 icon 매핑에는 사이드바 �
 ## 28. 공통 Form·FormModal 도입 준비
 
 - 2026-10-19: 도서·회원의 등록·수정 모달 네 개를 비교했다. 입력 초안 관리, 화면 검증, 저장 중 중복 제출·닫기 차단, 실패 시 입력 유지, 성공 후 닫기 흐름이 반복된다. 이를 근거로 공통 폼 도입을 단계적으로 시작한다.
-- `FormModal`은 MUI `Dialog`의 열림·닫힘, 제목, 저장·취소 버튼, 제출 중 잠금, 본문 슬롯을 맡는다. 업무를 알지 못하므로 입력 필드·검증 규칙·저장 요청·Query 무효화에는 관여하지 않는다.
+- MES_FE의 공통 Dialog 이름은 `Modal<T>`이며, 이 컴포넌트가 열림·닫힘, 제목, 저장·취소 버튼, 제출 중 잠금, 본문 슬롯을 맡는다. 업무를 알지 못하므로 입력 필드·검증 규칙·저장 요청·Query 무효화에는 관여하지 않는다. MES의 `FormModal<T>`은 다양한 입력 필드를 `fields` 정의로 렌더링하는 별도 계층이므로 현재는 도입하지 않는다.
 - 도서·회원 모달은 기본값과 입력 필드, 도메인별 Zod 스키마, Service mutation 호출, 요청 DTO 변환, 저장 성공 뒤의 업무 후처리를 맡는다. 현재의 미저장 변경 확인도 업무 모달에 남겨 이후 실제 반복 여부를 확인한다.
 - 다음 단계에서는 `react-hook-form`, `Zod`와 resolver를 도입하고 회원 등록 모달 하나에 먼저 적용한다. 공통 알림·확인창·`useModalState`는 이번 범위에 포함하지 않는다.
 - 2026-10-19: `react-hook-form`, `Zod`, `@hookform/resolvers`를 추가하고 MES_FE와 같은 이름의 최소 `Form`을 만들었다. `Form`은 브라우저 기본 검증을 끄고 제출 이벤트를 전달할 뿐, 폼 상태·검증 규칙·업무 저장을 소유하지 않는다.
 - 2026-10-19: 회원 등록에 `schemaCreateMember`와 `useForm`을 적용했다. Zod가 공백 제거·필수값·최대 길이·이메일 형식을 검증하고, 유효한 값만 Service mutation에 전달한다. 모달은 mutation 실패 시 열려 있는 상태와 입력값을 유지하며, 성공한 경우에만 닫힌다.
+- 2026-10-24: MES_FE의 `Modal<T>`, `IModalBaseProps<T>`, `TModalConfirmHandler<T>` 이름과 책임을 최소 범위로 도입했다. `Modal`은 `UseFormReturn`과 `onConfirm`을 받아 제출 성공 뒤 폼을 초기화하고 닫으며, 회원 등록·수정 모달은 입력 필드·스키마·mutation만 제공한다. 회원 수정은 MES처럼 `values`로 선택 행의 값을 폼에 주입하고 `schemaUpdateMember`로 ID를 포함해 검증한다.
