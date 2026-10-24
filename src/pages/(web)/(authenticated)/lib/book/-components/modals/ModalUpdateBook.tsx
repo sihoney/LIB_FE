@@ -5,6 +5,7 @@ import Modal, {
 	type TModalConfirmHandler,
 } from '@/src/components/ui/modals/Modal';
 import { BOOK_CATEGORIES } from '@/src/consts/modules/lib/book';
+import { useConfirm } from '@/src/contexts/ConfirmGuardProvider';
 import { schemaUpdateBook, type ISchemaUpdateBook } from '@/src/schemas/modules/lib/book';
 import services from '@/src/services/services';
 import type { IBookListItem } from '@/src/types/modules/lib/book';
@@ -13,6 +14,7 @@ import { useForm } from 'react-hook-form';
 const ModalUpdateBook = ({ open, data, onClose }: IModalBaseProps<IBookListItem>) => {
 	const { bookService: service } = services;
 	const mutation = service.usePatchBook();
+	const confirm = useConfirm();
 	const form = useForm<ISchemaUpdateBook>({
 		resolver: zodResolver(schemaUpdateBook),
 		mode: 'all',
@@ -24,15 +26,15 @@ const ModalUpdateBook = ({ open, data, onClose }: IModalBaseProps<IBookListItem>
 			totalQuantity: data.totalQuantity,
 		},
 	});
-	const { errors, isSubmitting } = form.formState;
+	const { errors, isDirty, isSubmitting } = form.formState;
 	const hasFieldError = Boolean(
 		errors.title || errors.author || errors.category || errors.totalQuantity,
 	);
 
-	const handleClose = () => {
+	const handleClose = async () => {
 		if (
-			form.formState.isDirty &&
-			!window.confirm('변경사항이 저장되지 않습니다. 닫으시겠습니까?')
+			isDirty &&
+			!(await confirm({ message: '변경사항이 저장되지 않습니다. 닫으시겠습니까?' }))
 		)
 			return;
 		onClose();

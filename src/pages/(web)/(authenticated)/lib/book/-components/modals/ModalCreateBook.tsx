@@ -2,6 +2,7 @@ import { MenuItem, TextField } from '@mui/material';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Modal, { type TModalConfirmHandler } from '@/src/components/ui/modals/Modal';
 import { BOOK_CATEGORIES } from '@/src/consts/modules/lib/book';
+import { useConfirm } from '@/src/contexts/ConfirmGuardProvider';
 import { schemaCreateBook, type ISchemaCreateBook } from '@/src/schemas/modules/lib/book';
 import services from '@/src/services/services';
 import { useForm } from 'react-hook-form';
@@ -20,19 +21,20 @@ const ModalCreateBook = ({ open, onClose }: IModalCreateBookProps) => {
 	// MES_FE의 FormModal은 fields 정의로 여러 종류의 입력을 그리는 계층입니다.
 	// 현재는 TextField 네 개만 있어 공통 Modal과 useForm만 적용합니다.
 	const mutation = services.bookService.usePostBook();
+	const confirm = useConfirm();
 	const form = useForm<ISchemaCreateBook>({
 		resolver: zodResolver(schemaCreateBook),
 		defaultValues: initialValues,
 	});
-	const { errors, isSubmitting } = form.formState;
+	const { errors, isDirty, isSubmitting } = form.formState;
 	const hasFieldError = Boolean(
 		errors.title || errors.author || errors.category || errors.totalQuantity,
 	);
 
-	const handleClose = () => {
+	const handleClose = async () => {
 		if (
-			form.formState.isDirty &&
-			!window.confirm('변경사항이 저장되지 않습니다. 닫으시겠습니까?')
+			isDirty &&
+			!(await confirm({ message: '변경사항이 저장되지 않습니다. 닫으시겠습니까?' }))
 		)
 			return;
 		onClose();

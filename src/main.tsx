@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '@/src/index.css';
+import { ConfirmGuardProvider } from '@/src/contexts/ConfirmGuardProvider';
 import MswProvider from '@/src/contexts/MswProvider';
 import QueryProvider from '@/src/contexts/QueryProvider';
 import RouterProvider from '@/src/contexts/RouterProvider';
@@ -10,7 +11,9 @@ createRoot(document.getElementById('root')!).render(
 	<StrictMode>
 		<MswProvider>
 			<QueryProvider>
-				<RouterProvider />
+				<ConfirmGuardProvider>
+					<RouterProvider />
+				</ConfirmGuardProvider>
 			</QueryProvider>
 		</MswProvider>
 	</StrictMode>,
