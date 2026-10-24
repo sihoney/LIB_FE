@@ -1,4 +1,5 @@
 import type { ITableState } from '@/src/hooks/common/table/useTableState';
+import RenderRowCustomActions from '@/src/components/ui/tables/renders/RenderRowCustomActions';
 import {
 	MaterialReactTable,
 	useMaterialReactTable,
@@ -26,6 +27,10 @@ export interface ITableProps<T extends MRT_RowData, U extends object = object> {
 	tableState: TTableState<U>;
 	state?: Pick<Partial<MRT_TableState<T>>, 'isLoading' | 'showProgressBars'>;
 	getRowId?: MRT_TableOptions<T>['getRowId'];
+	disabled?: boolean;
+	onUpdateRow?: (row: T) => void;
+	onDeleteRow?: (row: T) => void;
+	isDeleteRowDisabled?: (row: T) => boolean;
 }
 
 // MES 공통 Table의 서버 목록 연결만 유지한다. 업무별 컬럼은 TableLibXxx가 정의한다.
@@ -36,6 +41,10 @@ const Table = <T extends MRT_RowData, U extends object = object>({
 	tableState,
 	state,
 	getRowId,
+	disabled,
+	onUpdateRow,
+	onDeleteRow,
+	isDeleteRowDisabled,
 }: ITableProps<T, U>) => {
 	const { isLoading = false, showProgressBars = false } = state ?? {};
 
@@ -77,6 +86,17 @@ const Table = <T extends MRT_RowData, U extends object = object>({
 		enableColumnPinning: false,
 		enableGrouping: false,
 		enableRowSelection: false,
+		enableRowActions: Boolean(onUpdateRow || onDeleteRow),
+		positionActionsColumn: 'last',
+		renderRowActions: ({ row }) => (
+			<RenderRowCustomActions
+				row={row}
+				disabled={disabled}
+				onUpdateRow={onUpdateRow}
+				onDeleteRow={onDeleteRow}
+				isDeleteRowDisabled={isDeleteRowDisabled}
+			/>
+		),
 	});
 
 	return <MaterialReactTable table={table} />;

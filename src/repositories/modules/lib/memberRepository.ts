@@ -1,5 +1,6 @@
 import {
 	MEMBER_CREATE_META,
+	MEMBER_DELETE_META,
 	MEMBER_UPDATE_META,
 	MEMBER_LIST_META,
 	MEMBER_MODULE,
@@ -13,6 +14,7 @@ import type {
 	IMember,
 	IMemberCreate,
 	IMemberUpdate,
+	IMemberDelete,
 } from '@/src/types/modules/lib/member';
 import type { IRequestBody } from '@/src/types/common/repository';
 
@@ -53,6 +55,13 @@ export default class MemberRepository {
 		this.httpClient.patch<IMemberUpdate, IMember>({
 			url: MEMBER_MODULE,
 			meta: MEMBER_UPDATE_META,
+			body,
+		});
+
+	public deleteMember = (body: IRequestBody<IMemberDelete>) =>
+		this.httpClient.delete<IMemberDelete, IMember>({
+			url: MEMBER_MODULE,
+			meta: MEMBER_DELETE_META,
 			body,
 		});
 }

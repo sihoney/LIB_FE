@@ -17,3 +17,5 @@ export const MEMBER_CREATE_META = {
 	functionCode: 'Create',
 } as const;
 export const MEMBER_UPDATE_META = { signature: 'Member', functionCode: 'Update' } as const;
+
+export const MEMBER_DELETE_META = { signature: 'Member', functionCode: 'Delete' } as const;

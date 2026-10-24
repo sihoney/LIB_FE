@@ -2,6 +2,7 @@ import { ENV_API_BASE_URL } from '@/src/consts/common/envKeys';
 import {
 	MEMBER_LIST_META,
 	MEMBER_CREATE_META,
+	MEMBER_DELETE_META,
 	MEMBER_UPDATE_META,
 	MEMBER_MODULE,
 	MEMBER_NAME_MAX_LENGTH,
@@ -16,6 +17,7 @@ import type {
 	IMember,
 	IMemberCreate,
 	IMemberUpdate,
+	IMemberDelete,
 	IMemberListRequest,
 	IMemberListResponse,
 	IMemberSorting,
@@ -35,6 +37,10 @@ const createEndpoint = new URL(
 ).href;
 const updateEndpoint = new URL(
 	`v2/${MEMBER_MODULE}/${MEMBER_UPDATE_META.signature}/${MEMBER_UPDATE_META.functionCode}/Update`,
+	apiBase,
+).href;
+const deleteEndpoint = new URL(
+	`v2/${MEMBER_MODULE}/${MEMBER_DELETE_META.signature}/${MEMBER_DELETE_META.functionCode}/Update`,
 	apiBase,
 ).href;
 
@@ -122,6 +128,12 @@ const getMemberUpdateData = (value: unknown): IMemberUpdate | null => {
 		return null;
 	const create = getMemberCreateData(value);
 	return create ? { id: value.data.id, ...create } : null;
+};
+
+const getMemberDeleteData = (value: unknown): IMemberDelete | null => {
+	if (!isRecord(value) || !isRecord(value.data)) return null;
+	const { id } = value.data;
+	return typeof id === 'number' && Number.isSafeInteger(id) && id > 0 ? { id } : null;
 };
 
 // compareMemberListItems: 정렬 순서를 계산
@@ -229,6 +241,47 @@ export const memberHandlers = [
 				data: null,
 			});
 		members[index] = { ...members[index], ...data };
+		return HttpResponse.json<IResponseBody<IMember>>({
+			success: true,
+			returnMess: '',
+			returnMessCode: 0,
+			data: members[index],
+		});
+	}),
+	http.post(deleteEndpoint, async ({ request }) => {
+		const data = getMemberDeleteData(await request.json().catch(() => undefined));
+		await delay(350);
+
+		if (!data)
+			return HttpResponse.json<IResponseBody<IMember | null>>({
+				success: false,
+				returnMess: '삭제할 회원 ID를 확인해 주세요.',
+				returnMessCode: 'INVALID_MEMBER_DELETE_REQUEST',
+				data: null,
+			});
+
+		const index = members.findIndex(member => member.id === data.id);
+		if (index < 0)
+			return HttpResponse.json<IResponseBody<IMember | null>>({
+				success: false,
+				returnMess: '삭제할 회원을 찾을 수 없습니다.',
+				returnMessCode: 'MEMBER_NOT_FOUND',
+				data: null,
+			});
+
+		if (members[index].status === 'WITHDRAWN')
+			return HttpResponse.json<IResponseBody<IMember | null>>({
+				success: false,
+				returnMess: '이미 탈퇴 처리된 회원입니다.',
+				returnMessCode: 'MEMBER_ALREADY_WITHDRAWN',
+				data: null,
+			});
+
+		members[index] = {
+			...members[index],
+			status: 'WITHDRAWN',
+			withdrawnAt: new Date().toISOString(),
+		};
 		return HttpResponse.json<IResponseBody<IMember>>({
 			success: true,
 			returnMess: '',

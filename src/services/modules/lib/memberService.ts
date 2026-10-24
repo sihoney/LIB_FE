@@ -1,5 +1,6 @@
 import {
 	MEMBER_CREATE_META,
+	MEMBER_DELETE_META,
 	MEMBER_LIST_META,
 	MEMBER_MODULE,
 	MEMBER_UPDATE_META,
@@ -10,6 +11,7 @@ import type {
 	IMemberCreate,
 	IMemberListRequest,
 	IMemberUpdate,
+	IMemberDelete,
 } from '@/src/types/modules/lib/member';
 import type { IRequestBody } from '@/src/types/common/repository';
 import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
@@ -56,6 +58,24 @@ export default class MemberService {
 			],
 			mutationFn: (body: IRequestBody<IMemberUpdate>) =>
 				this.memberRepository.patchMember(body),
+			onSuccess: () =>
+				queryClient.invalidateQueries({
+					queryKey: [
+						MEMBER_MODULE,
+						MEMBER_LIST_META.signature,
+						MEMBER_LIST_META.functionCode,
+					],
+				}),
+		});
+
+	public useDeleteMember = () =>
+		useMutation({
+			mutationKey: [
+				MEMBER_MODULE,
+				MEMBER_DELETE_META.signature,
+				MEMBER_DELETE_META.functionCode,
+			],
+			mutationFn: (body: IRequestBody<IMemberDelete>) => this.memberRepository.deleteMember(body),
 			onSuccess: () =>
 				queryClient.invalidateQueries({
 					queryKey: [

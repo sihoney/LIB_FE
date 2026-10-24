@@ -480,3 +480,9 @@ ButtonIcon·Icon은 MES 래퍼를 사용하며 icon 매핑에는 사이드바 �
 - 2026-10-24: 도서 등록에도 `schemaCreateBook`, `useForm`, 공통 `Modal<T>`을 적용해 회원과 동일한 제출 흐름을 확인했다. 제목·저자는 스키마에서 공백을 제거하고 길이를 검사하며, 분류와 보유 수량도 요청 전에 검증한다. 등록 화면의 미저장 변경 확인은 도서 업무 모달에 남긴다. 보유 수량 수정 제한은 별도 업무 규칙이 있으므로 도서 수정 전환 단계에서 다룬다.
 - 2026-10-24: 도서 수정에 `schemaUpdateBook`, `IModalBaseProps<IBookListItem>`, `useForm`의 `values`를 적용했다. 수정 대상 행이 바뀌면 폼 값을 함께 갱신하며, 제목·저자·분류·수량 형식은 Zod가 검증한다. 대출 중 수량보다 보유 수량을 낮출 수 없는 업무 규칙은 화면에 복제하지 않고 기존 MSW HTTP 경계 검증을 유지한다.
 - 2026-10-24: MES_FE의 `ConfirmGuardProvider`, `useConfirm` 이름을 최소 범위로 도입했다. Provider는 Promise 기반 확인 요청 하나를 표시하고 결과를 boolean으로 반환한다. 도서 등록·수정 모달은 브라우저 `window.confirm` 대신 이를 사용해 미저장 변경을 확인한다. 라우트 이동 차단, 명령형 호출, 삭제 확인 모달 전환은 실제 반복 요구가 확인된 뒤 도입한다.
+
+## 29. 회원 탈퇴 처리와 공통 행 동작
+
+- 2026-10-24: MES_FE의 `Table` → `RenderRowCustomActions` → `useConfirm` 흐름을 최소 범위로 적용했다. 공통 `Table`은 `onUpdateRow`, `onDeleteRow`, `isDeleteRowDisabled`만 받고, 삭제 확인과 행 동작 UI를 맡는다. 실제 요청과 업무 규칙은 Page와 Service 계층에 둔다.
+- 회원 삭제 요청은 `Member/Delete/Update` 계약을 사용한다. 회원과 로그인 계정의 이력을 보존하기 위해 Mock에서는 배열에서 제거하지 않고 `status: 'WITHDRAWN'`, `withdrawnAt`을 갱신한다. 이미 탈퇴한 회원의 삭제 버튼은 비활성화하고, HTTP 경계에서도 중복 탈퇴 요청을 거부한다.
+- `MemberService.useDeleteMember`는 성공 후 회원 목록 Query 접두어를 무효화한다. 화면 배열을 직접 수정하지 않으므로, 검색 조건과 페이지별 캐시가 다시 조회되어 결과를 반영한다.

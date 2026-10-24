@@ -33,8 +33,9 @@ const Component = () => {
 	});
 
 	const query = services.memberService.useGetMemberList(tableState.requestBody);
+	const deleteMutation = services.memberService.useDeleteMember();
 	const totalRecords = query.data?.totalRecords ?? 0;
-	const isBusy = query.isFetching;
+	const isBusy = query.isFetching || deleteMutation.isPending;
 
 	const applySearch = (data: IMemberSearch) => {
 		if (tableState.submit(data)) {
@@ -158,7 +159,9 @@ const Component = () => {
 				}}
 				getRowId={member => String(member.id)}
 				disabled={isBusy}
-				onUpdate={setUpdateMember}
+				onUpdateRow={setUpdateMember}
+				onDeleteRow={member => deleteMutation.mutate({ data: { id: member.id } })}
+				isDeleteRowDisabled={member => member.status === 'WITHDRAWN'}
 			/>
 		</section>
 	);
